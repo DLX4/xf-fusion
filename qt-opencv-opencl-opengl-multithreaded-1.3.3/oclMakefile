@@ -1,0 +1,13 @@
+DSP_INCLUDE  = -I$(TI_OCL_CGT_INSTALL)/include 
+DSP_INCLUDE += -I$(TARGET_ROOTDIR)/usr/share/ti/cgt-c6x/include
+DSP_INCLUDE += -I$(TARGET_ROOTDIR)/usr/share/ti/opencl
+CL6X  = cl6x -mv6600 --abi=eabi $(DSP_INCLUDE)
+CLOCL = clocl
+
+UNAME_M :=$(shell uname -m)
+
+phillips.dsp_h: phillips.cl ${TI_DSPLIB_DIR}/packages/ti/dsplib/lib/dsplib.ae66
+	$(CLOCL) --txt $^
+
+clean:
+	rm -f phillips.dsp_h

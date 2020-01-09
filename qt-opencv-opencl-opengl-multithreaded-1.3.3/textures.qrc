@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>lake-surface.jpg</file>
+    </qresource>
+</RCC>

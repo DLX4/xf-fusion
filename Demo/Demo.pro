@@ -14,6 +14,29 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # In order to do so, uncomment the following line.
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
+INCLUDEPATH += D:\opencv24\opencv24-qt5\include\opencv \
+             D:\opencv24\opencv24-qt5\include\opencv2 \
+             D:\opencv24\opencv24-qt5\include
+
+
+LIBS +=  D:\opencv24\opencv24-qt5\lib\libopencv_calib3d2411.dll.a \
+        D:\opencv24\opencv24-qt5\lib\libopencv_contrib2411.dll.a \
+        D:\opencv24\opencv24-qt5\lib\libopencv_core2411.dll.a \
+        D:\opencv24\opencv24-qt5\lib\libopencv_features2d2411.dll.a \
+        D:\opencv24\opencv24-qt5\lib\libopencv_flann2411.dll.a \
+        D:\opencv24\opencv24-qt5\lib\libopencv_gpu2411.dll.a \
+        D:\opencv24\opencv24-qt5\lib\libopencv_highgui2411.dll.a \
+        D:\opencv24\opencv24-qt5\lib\libopencv_imgproc2411.dll.a \
+        D:\opencv24\opencv24-qt5\lib\libopencv_legacy2411.dll.a \
+        D:\opencv24\opencv24-qt5\lib\libopencv_ml2411.dll.a \
+        D:\opencv24\opencv24-qt5\lib\libopencv_nonfree2411.dll.a \
+        D:\opencv24\opencv24-qt5\lib\libopencv_objdetect2411.dll.a \
+        D:\opencv24\opencv24-qt5\lib\libopencv_ocl2411.dll.a \
+        D:\opencv24\opencv24-qt5\lib\libopencv_photo2411.dll.a \
+        D:\opencv24\opencv24-qt5\lib\libopencv_stitching2411.dll.a \
+        D:\opencv24\opencv24-qt5\lib\libopencv_ts2411.a \
+        D:\opencv24\opencv24-qt5\lib\libopencv_video2411.dll.a \
+        D:\opencv24\opencv24-qt5\lib\libopencv_videostab2411.dll.a \
 
 SOURCES += \
     main.cpp \
