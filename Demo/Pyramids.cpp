@@ -23,29 +23,29 @@ void buildLaplacianPyramids(Mat& src, LapPyr& pyr, int octvs=5) {
     pyr.resize(octvs);
     pyr[0] = src.clone();
 
-    for(int i = 1; i < octvs; i++) {
+    for (int i = 1; i < octvs; i++) {
         // 往下构造本层高斯金字塔
         Mat down;
-        pyrDown(pyr[i-1], down);
+        pyrDown(pyr[i - 1], down);
         pyr[i] = down.clone();
 
         // upscale 2x
         Mat expend;
-        pyrUp(down, expend, pyr[i-1].size());
+        pyrUp(down, expend, pyr[i - 1].size());
 
         // 上一层高斯金字塔减去本层高斯金字塔*2 得到上一层拉普拉斯金字塔
         Mat subtract;
-        addWeighted(pyr[i-1], 1, expend, -1, 0, subtract);
-        pyr[i-1] = subtract.clone();
+        addWeighted(pyr[i - 1], 1, expend, -1, 0, subtract);
+        pyr[i - 1] = subtract.clone();
     }
 }
 
 // 顶层图像融合策略为平均梯度
 void blendLaplacianPyramidsByXYDir(Mat& imageA, Mat& imageB, Mat& imageS) {
     int height = imageA.rows;
-    int width = imageB.cols;
+    int width = imageA.cols;
 
-    for(int i = 0; i < height; i++) {
+    for (int i = 0; i < height; i++) {
         for(int j = 0; j < width; j++) {
 
             // 不检查边界
@@ -94,8 +94,8 @@ void blendLaplacianPyramidsByRE(Mat& imageA, Mat& imageB, Mat& imageS) {
     int height = imageA.rows;
     int width = imageB.cols;
 
-    for(int i = 0; i < height; i++) {
-        for(int j = 0; j < width; j++) {
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
 
             // 不检查边界
             if ((i > 1) && (i < (height - 2)) && (j > 1) && (j < (width - 2))) {
@@ -147,19 +147,19 @@ void blendLaplacianPyramids(LapPyr& pyrA, LapPyr& pyrB, LapPyr& pyrS, Mat& dst) 
         } else {
             blendLaplacianPyramidsByRE(pyrA[idx], pyrB[idx], pyrS[idx]);
         }
-       // blendLaplacianPyramidsByRE(pyrA[idx], pyrB[idx], pyrS[idx]);
+        // blendLaplacianPyramidsByRE(pyrA[idx], pyrB[idx], pyrS[idx]);
     }
 
     // 输出图像
     for (int i = pyrS.size() - 1; i >= 1; i--) {
         // upscale 2x
         Mat expend;
-        pyrUp(pyrS[i], expend, pyrS[i-1].size());
+        pyrUp(pyrS[i], expend, pyrS[i - 1].size());
         // resize(pyrS[i], expend, Size(pyrS[i-1].cols, pyrS[i-1].rows), 0, 0, INTER_CUBIC);
 
         Mat add;
-        addWeighted(pyrS[i-1], 1, expend, 1, 0, add);
-        pyrS[i-1] = add.clone();
+        addWeighted(pyrS[i - 1], 1, expend, 1, 0, add);
+        pyrS[i - 1] = add.clone();
     }
     dst = pyrS[0].clone();
 }
