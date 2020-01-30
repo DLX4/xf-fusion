@@ -39,11 +39,9 @@ LIBS +=  D:\opencv24\opencv24-qt5\lib\libopencv_calib3d2411.dll.a \
         D:\opencv24\opencv24-qt5\lib\libopencv_videostab2411.dll.a \
 
 SOURCES += \
-    main.cpp \
-    mainwindow.cpp
+    Pyramids.cpp
 
-HEADERS += \
-    mainwindow.h
+HEADERS +=
 
 FORMS += \
     mainwindow.ui
