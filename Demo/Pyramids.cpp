@@ -9,8 +9,8 @@
 using namespace std;
 using namespace cv;
 
-#define IMG1_PATH "D:\\code\\dan-qt\\Demo\\avatar.jpg"
-#define IMG2_PATH "D:\\code\\dan-qt\\Demo\\avatar2.jpg"
+#define IMG1_PATH "D:\\code\\dan-qt\\Demo\\left.png"
+#define IMG2_PATH "D:\\code\\dan-qt\\Demo\\right.png"
 #define AVATAR_PATH "D:\\code\\dan-qt\\Demo\\avatar.jpg"
 
 using LapPyr = vector<Mat>;
@@ -30,7 +30,7 @@ void buildLaplacianPyramids(Mat& src, LapPyr& pyr, int octvs=5) {
 
         // upscale 2x
         Mat expend;
-        resize(down, expend, Size(), 2, 2, INTER_CUBIC);
+        resize(down, expend, Size(pyr[i-1].cols, pyr[i-1].rows), 0, 0, INTER_CUBIC);
 
         // 上一层高斯金字塔减去本层高斯金字塔*2 得到上一层拉普拉斯金字塔
         Mat subtract;
@@ -100,7 +100,7 @@ void blendLaplacianPyramids(LapPyr& pyrA, LapPyr& pyrB, LapPyr& pyrS, Mat& dst) 
     for (int i = pyrS.size() - 1; i >= 1; i--) {
         // upscale 2x
         Mat expend;
-        resize(pyrS[i], expend, Size(), 2, 2, INTER_CUBIC);
+        resize(pyrS[i], expend, Size(pyrS[i-1].cols, pyrS[i-1].rows), 0, 0, INTER_CUBIC);
 
         Mat add;
         addWeighted(pyrS[i-1], 1, expend, 1, 0, add);
