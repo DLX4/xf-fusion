@@ -26,12 +26,12 @@ void buildLaplacianPyramids(Mat& src, LapPyr& pyr, int octvs=5) {
     for(int i = 1; i < octvs; i++) {
         // 往下构造本层高斯金字塔
         Mat down;
-        pyrDown(pyr[i-1], down, Size( pyr[i-1].cols/2, pyr[i-1].rows/2 ));
+        pyrDown(pyr[i-1], down);
         pyr[i] = down.clone();
 
         // upscale 2x
         Mat expend;
-        resize(down, expend, Size(pyr[i-1].cols, pyr[i-1].rows), 0, 0, INTER_CUBIC);
+        pyrUp(down, expend, pyr[i-1].size());
 
         // 上一层高斯金字塔减去本层高斯金字塔*2 得到上一层拉普拉斯金字塔
         Mat subtract;
@@ -147,14 +147,15 @@ void blendLaplacianPyramids(LapPyr& pyrA, LapPyr& pyrB, LapPyr& pyrS, Mat& dst) 
         } else {
             blendLaplacianPyramidsByRE(pyrA[idx], pyrB[idx], pyrS[idx]);
         }
-        // blendLaplacianPyramidsByRE(pyrA[idx], pyrB[idx], pyrS[idx]);
+       // blendLaplacianPyramidsByRE(pyrA[idx], pyrB[idx], pyrS[idx]);
     }
 
     // 输出图像
     for (int i = pyrS.size() - 1; i >= 1; i--) {
         // upscale 2x
         Mat expend;
-        resize(pyrS[i], expend, Size(pyrS[i-1].cols, pyrS[i-1].rows), 0, 0, INTER_CUBIC);
+        pyrUp(pyrS[i], expend, pyrS[i-1].size());
+        // resize(pyrS[i], expend, Size(pyrS[i-1].cols, pyrS[i-1].rows), 0, 0, INTER_CUBIC);
 
         Mat add;
         addWeighted(pyrS[i-1], 1, expend, 1, 0, add);
@@ -180,12 +181,12 @@ int main()
     // AVATAR_PATH IMG1_PATH
 
     // 图像A 拉普拉斯金字塔
-    Mat srcA = imread(AVATAR1_PATH);
+    Mat srcA = imread(IMG1_PATH);
     buildLaplacianPyramids(srcA, LA);
     // showLaplacianPyramids(LA);
 
     // 图像B 拉普拉斯金字塔
-    Mat srcB = imread(AVATAR2_PATH);
+    Mat srcB = imread(IMG2_PATH);
     buildLaplacianPyramids(srcB, LB);
     // showLaplacianPyramids(LB);
 
