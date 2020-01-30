@@ -11,7 +11,8 @@ using namespace cv;
 
 #define IMG1_PATH "D:\\code\\dan-qt\\Demo\\left.png"
 #define IMG2_PATH "D:\\code\\dan-qt\\Demo\\right.png"
-#define AVATAR_PATH "D:\\code\\dan-qt\\Demo\\avatar.jpg"
+#define AVATAR1_PATH "D:\\code\\dan-qt\\Demo\\avatar.jpg"
+#define AVATAR2_PATH "D:\\code\\dan-qt\\Demo\\avatar2.jpg"
 
 using LapPyr = vector<Mat>;
 // 通过源图像构造拉普拉斯金字塔
@@ -146,6 +147,7 @@ void blendLaplacianPyramids(LapPyr& pyrA, LapPyr& pyrB, LapPyr& pyrS, Mat& dst) 
         } else {
             blendLaplacianPyramidsByRE(pyrA[idx], pyrB[idx], pyrS[idx]);
         }
+        // blendLaplacianPyramidsByRE(pyrA[idx], pyrB[idx], pyrS[idx]);
     }
 
     // 输出图像
@@ -178,12 +180,12 @@ int main()
     // AVATAR_PATH IMG1_PATH
 
     // 图像A 拉普拉斯金字塔
-    Mat srcA = imread(IMG1_PATH);
+    Mat srcA = imread(AVATAR1_PATH);
     buildLaplacianPyramids(srcA, LA);
     // showLaplacianPyramids(LA);
 
     // 图像B 拉普拉斯金字塔
-    Mat srcB = imread(IMG2_PATH);
+    Mat srcB = imread(AVATAR2_PATH);
     buildLaplacianPyramids(srcB, LB);
     // showLaplacianPyramids(LB);
 
