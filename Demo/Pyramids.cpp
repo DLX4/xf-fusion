@@ -84,14 +84,16 @@ void blendLaplacianPyramidsByXYDir(Mat& imageA, Mat& imageB, Mat& imageS) {
     }
 }
 
-// 非顶层融合策略为区域能量, 均值滤波
-double G[3][3] = {
-    {0.1111, 0.1111, 0.1111},
-    {0.1111, 0.1111, 0.1111},
-    {0.1111, 0.1111, 0.1111}
-};
-double matchDegreeLimit = 0.618;
-void blendLaplacianPyramidsByRE(Mat& imageA, Mat& imageB, Mat& imageS) {
+// 融合策略为区域能量
+void blendLaplacianPyramidsByRE2(Mat& imageA, Mat& imageB, Mat& imageS) {
+    // 均值滤波
+    double G[3][3] = {
+        {0.1111, 0.1111, 0.1111},
+        {0.1111, 0.1111, 0.1111},
+        {0.1111, 0.1111, 0.1111}
+    };
+    double matchDegreeLimit = 0.618;
+
     int height = imageA.rows;
     int width = imageB.cols;
 
@@ -136,20 +138,72 @@ void blendLaplacianPyramidsByRE(Mat& imageA, Mat& imageB, Mat& imageS) {
     }
 }
 
+// 融合策略为区域能量
+void blendLaplacianPyramidsByRE1(Mat& imageA, Mat& imageB, Mat& imageS) {
+    int G[3][3] = {
+        {1, 2, 1},
+        {2, 4, 2},
+        {1, 2, 1}
+    };
+    int height = imageA.rows;
+    int width = imageB.cols;
+
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+
+            // 不检查边界
+            if ((i > 1) && (i < (height - 2)) && (j > 1) && (j < (width - 2))) {
+                // 3*3
+                int deltaA[3] = {0};
+                int deltaB[3] = {0};
+                for (int rowOffset = -1; rowOffset <= 1; rowOffset++) {
+                    for (int colOffset= -1; colOffset <= 1; colOffset++) {
+                        for (int rgb = 0; rgb < 3; rgb++) {
+                            int x = i + rowOffset;
+                            int y = j + colOffset;
+
+                            deltaA[rgb] += G[1+rowOffset][1+colOffset] * imageA.at<Vec3b>(x, y)[rgb];
+                            deltaB[rgb] += G[1+rowOffset][1+colOffset] * imageB.at<Vec3b>(x, y)[rgb];
+                        }
+                    }
+                }
+                for (int rgb = 0; rgb < 3; rgb++) {
+                    if (deltaA[rgb] > deltaB[rgb]) {
+                        imageS.at<Vec3b>(i, j)[rgb] = imageA.at<Vec3b>(i, j)[rgb];
+                    } else {
+                        imageS.at<Vec3b>(i, j)[rgb] = imageB.at<Vec3b>(i, j)[rgb];
+                    }
+                }
+            }
+        }
+    }
+}
+
 // 将两个原图像的拉普拉斯金字塔融合
-void blendLaplacianPyramids(LapPyr& pyrA, LapPyr& pyrB, LapPyr& pyrS, Mat& dst) {
+void blendLaplacianPyramids(LapPyr& pyrA, LapPyr& pyrB, LapPyr& pyrS, Mat& dst, int strategy) {
     pyrS.clear();
     pyrS.resize(pyrA.size());
 
     // 拉普拉斯金字塔各层分别融合
     for (int idx = 0; idx < pyrS.size(); idx++) {
         pyrS[idx] = pyrA[idx].clone();
-//        if (idx == pyrS.size() - 1) {
-//            blendLaplacianPyramidsByXYDir(pyrA[idx], pyrB[idx], pyrS[idx]);
-//        } else {
-//            blendLaplacianPyramidsByRE(pyrA[idx], pyrB[idx], pyrS[idx]);
-//        }
-        blendLaplacianPyramidsByRE(pyrA[idx], pyrB[idx], pyrS[idx]);
+        switch(strategy) {
+        case 1:
+            if (idx == pyrS.size() - 1) {
+                blendLaplacianPyramidsByXYDir(pyrA[idx], pyrB[idx], pyrS[idx]);
+            } else {
+                blendLaplacianPyramidsByRE2(pyrA[idx], pyrB[idx], pyrS[idx]);
+            }
+            break;
+        case 2:
+            blendLaplacianPyramidsByRE1(pyrA[idx], pyrB[idx], pyrS[idx]);
+            break;
+        case 3:
+            blendLaplacianPyramidsByRE2(pyrA[idx], pyrB[idx], pyrS[idx]);
+            break;
+        default:
+            break;
+        }
     }
 
     // 输出图像
@@ -173,28 +227,39 @@ void showLaplacianPyramids(LapPyr& pyr) {
     }
 }
 
+
+
 int main()
 {
     LapPyr LA;
     LapPyr LB;
     LapPyr LS;
-    Mat dst;
+
 
     // AVATAR_PATH IMG1_PATH
 
     // 图像A 拉普拉斯金字塔
-    Mat srcA = imread(AVATAR1_PATH);
+    Mat srcA = imread(IMG1_PATH);
     buildLaplacianPyramids(srcA, LA);
     // showLaplacianPyramids(LA);
 
     // 图像B 拉普拉斯金字塔
-    Mat srcB = imread(AVATAR2_PATH);
+    Mat srcB = imread(IMG2_PATH);
     buildLaplacianPyramids(srcB, LB);
     // showLaplacianPyramids(LB);
 
     // 融合
-    blendLaplacianPyramids(LA, LB, LS, dst);
-    imshow("success", dst);
+    Mat dst1;
+    blendLaplacianPyramids(LA, LB, LS, dst1, 1);
+    imshow("1", dst1);
+
+    Mat dst2;
+    blendLaplacianPyramids(LA, LB, LS, dst2, 2);
+    imshow("2", dst2);
+
+    Mat dst3;
+    blendLaplacianPyramids(LA, LB, LS, dst3, 3);
+    imshow("3", dst3);
     waitKey(0);
 
     return 0;
