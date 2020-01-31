@@ -2,15 +2,16 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/opencv.hpp>
-#include <iostream>
 #include <string>
 #include <math.h>
+#include <iostream>
+#include <fstream>
 
 using namespace std;
 using namespace cv;
 
-#define IMG1_PATH "D:\\code\\dan-qt\\Demo\\left.png"
-#define IMG2_PATH "D:\\code\\dan-qt\\Demo\\right.png"
+#define IMG1_PATH "D:\\code\\dan-qt\\Demo\\test1.bmp"
+#define IMG2_PATH "D:\\code\\dan-qt\\Demo\\test2.bmp"
 #define AVATAR1_PATH "D:\\code\\dan-qt\\Demo\\avatar.jpg"
 #define AVATAR2_PATH "D:\\code\\dan-qt\\Demo\\avatar2.jpg"
 
@@ -64,20 +65,20 @@ void blendLaplacianPyramidsByXYDir(Mat& imageA, Mat& imageB, Mat& imageS) {
                     }
                 }
                 // 根据梯度大小进行融合
-                if (deltaA[0] > deltaB[0]) {
-                    imageS.at<Vec3b>(i, j)[0] = imageA.at<Vec3b>(i, j)[0];
-                } else {
-                    imageS.at<Vec3b>(i, j)[0] = imageB.at<Vec3b>(i, j)[0];
+                for (int rgb = 0; rgb < 3; rgb++) {
+                    if (deltaA[rgb] == deltaB[rgb]) {
+                        imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
+                    } else if (deltaA[rgb] > deltaB[rgb]) {
+                        imageS.at<Vec3b>(i, j)[rgb] = imageA.at<Vec3b>(i, j)[rgb];
+                    } else {
+                        imageS.at<Vec3b>(i, j)[rgb] = imageB.at<Vec3b>(i, j)[rgb];
+                    }
                 }
-                if (deltaA[1] > deltaB[1]) {
-                    imageS.at<Vec3b>(i, j)[1] = imageA.at<Vec3b>(i, j)[1];
-                } else {
-                    imageS.at<Vec3b>(i, j)[1] = imageB.at<Vec3b>(i, j)[1];
-                }
-                if (deltaA[2] > deltaB[2]) {
-                    imageS.at<Vec3b>(i, j)[2] = imageA.at<Vec3b>(i, j)[2];
-                } else {
-                    imageS.at<Vec3b>(i, j)[2] = imageB.at<Vec3b>(i, j)[2];
+
+            } else {
+                // 边界55开填充
+                for (int rgb = 0; rgb < 3; rgb++) {
+                    imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
                 }
             }
         }
@@ -123,7 +124,9 @@ void blendLaplacianPyramidsByRE2(Mat& imageA, Mat& imageB, Mat& imageS) {
                     matchDegree[rgb] = pow(matchDegree[rgb], 2) / (deltaA[rgb] * deltaB[rgb]);
 
                     if (isnan(matchDegree[rgb]) || matchDegree[rgb] < matchDegreeLimit) {
-                        if (deltaA[rgb] > deltaB[rgb]) {
+                        if (deltaA[rgb] == deltaB[rgb]) {
+                            imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
+                        } else if (deltaA[rgb] > deltaB[rgb]) {
                             imageS.at<Vec3b>(i, j)[rgb] = imageA.at<Vec3b>(i, j)[rgb];
                         } else {
                             imageS.at<Vec3b>(i, j)[rgb] = imageB.at<Vec3b>(i, j)[rgb];
@@ -132,6 +135,11 @@ void blendLaplacianPyramidsByRE2(Mat& imageA, Mat& imageB, Mat& imageS) {
                         double wMin = 0.5 * (1 - (1 - matchDegree[rgb])/(1 - matchDegreeLimit));
                         imageS.at<Vec3b>(i, j)[rgb] = min(imageA.at<Vec3b>(i, j)[rgb], imageB.at<Vec3b>(i, j)[rgb]) * wMin + max(imageA.at<Vec3b>(i, j)[rgb], imageB.at<Vec3b>(i, j)[rgb]) * (1 - wMin);
                     }
+                }
+            } else {
+                // 边界55开填充
+                for (int rgb = 0; rgb < 3; rgb++) {
+                    imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
                 }
             }
         }
@@ -168,11 +176,18 @@ void blendLaplacianPyramidsByRE1(Mat& imageA, Mat& imageB, Mat& imageS) {
                     }
                 }
                 for (int rgb = 0; rgb < 3; rgb++) {
-                    if (deltaA[rgb] > deltaB[rgb]) {
+                    if (deltaA[rgb] == deltaB[rgb]) {
+                        imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
+                    } else if (deltaA[rgb] > deltaB[rgb]) {
                         imageS.at<Vec3b>(i, j)[rgb] = imageA.at<Vec3b>(i, j)[rgb];
                     } else {
                         imageS.at<Vec3b>(i, j)[rgb] = imageB.at<Vec3b>(i, j)[rgb];
                     }
+                }
+            } else {
+                // 边界55开填充
+                for (int rgb = 0; rgb < 3; rgb++) {
+                    imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
                 }
             }
         }
@@ -186,7 +201,7 @@ void blendLaplacianPyramids(LapPyr& pyrA, LapPyr& pyrB, LapPyr& pyrS, Mat& dst, 
 
     // 拉普拉斯金字塔各层分别融合
     for (int idx = 0; idx < pyrS.size(); idx++) {
-        pyrS[idx] = pyrA[idx].clone();
+        pyrS[idx] = Mat::zeros(pyrA[idx].size(), pyrA[idx].type());
         switch(strategy) {
         case 1:
             if (idx == pyrS.size() - 1) {
@@ -227,14 +242,28 @@ void showLaplacianPyramids(LapPyr& pyr) {
     }
 }
 
+// 将mat输出到文件
+void writeMatToFile(Mat& m, const char* filename) {
+    ofstream fout(filename);
 
+    if (!fout) {
+        std::cout << "File Not Opened" << std::endl;
+        return;
+    }
 
-int main()
-{
+    for (int i = 0; i < m.rows; i++) {
+        for (int j = 0; j < m.cols; j++) {
+            fout << m.at<Vec3b>(i, j) << "\t";
+        }
+        fout << std::endl;
+    }
+    fout.close();
+}
+
+int main() {
     LapPyr LA;
     LapPyr LB;
     LapPyr LS;
-
 
     // AVATAR_PATH IMG1_PATH
 
@@ -261,6 +290,10 @@ int main()
     blendLaplacianPyramids(LA, LB, LS, dst3, 3);
     imshow("3", dst3);
     waitKey(0);
+
+    writeMatToFile(dst1, "D:\\code\\dan-qt\\Demo\\dst1.txt");
+    writeMatToFile(dst2, "D:\\code\\dan-qt\\Demo\\dst2.txt");
+    writeMatToFile(dst3, "D:\\code\\dan-qt\\Demo\\dst3.txt");
 
     return 0;
 }
