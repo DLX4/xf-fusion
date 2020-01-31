@@ -84,12 +84,13 @@ void blendLaplacianPyramidsByXYDir(Mat& imageA, Mat& imageB, Mat& imageS) {
     }
 }
 
-// 非顶层融合策略为区域能量
-int G[3][3] = {
-    {1, 2, 1},
-    {2, 4, 2},
-    {1, 2, 1}
+// 非顶层融合策略为区域能量, 均值滤波
+double G[3][3] = {
+    {0.1111, 0.1111, 0.1111},
+    {0.1111, 0.1111, 0.1111},
+    {0.1111, 0.1111, 0.1111}
 };
+double matchDegreeLimit = 0.618;
 void blendLaplacianPyramidsByRE(Mat& imageA, Mat& imageB, Mat& imageS) {
     int height = imageA.rows;
     int width = imageB.cols;
@@ -100,34 +101,35 @@ void blendLaplacianPyramidsByRE(Mat& imageA, Mat& imageB, Mat& imageS) {
             // 不检查边界
             if ((i > 1) && (i < (height - 2)) && (j > 1) && (j < (width - 2))) {
                 // 3*3
-                int deltaA[3] = {0};
-                int deltaB[3] = {0};
+                double deltaA[3] = {0.0};
+                double deltaB[3] = {0.0};
+                double matchDegree[3] = {0.0};
                 for (int rowOffset = -1; rowOffset <= 1; rowOffset++) {
                     for (int colOffset= -1; colOffset <= 1; colOffset++) {
                         for (int rgb = 0; rgb < 3; rgb++) {
                             int x = i + rowOffset;
                             int y = j + colOffset;
 
-                            deltaA[rgb] += G[1+rowOffset][1+colOffset] * imageA.at<Vec3b>(x, y)[rgb];
-                            deltaB[rgb] += G[1+rowOffset][1+colOffset] * imageB.at<Vec3b>(x, y)[rgb];
+                            deltaA[rgb] += G[1+rowOffset][1+colOffset] * pow(imageA.at<Vec3b>(x, y)[rgb], 2);
+                            deltaB[rgb] += G[1+rowOffset][1+colOffset] * pow(imageB.at<Vec3b>(x, y)[rgb], 2);
+                            matchDegree[rgb] += G[1+rowOffset][1+colOffset] * imageA.at<Vec3b>(x, y)[rgb] * imageB.at<Vec3b>(x, y)[rgb];
                         }
                     }
                 }
-                // 根据梯度大小进行融合
-                if (deltaA[0] > deltaB[0]) {
-                    imageS.at<Vec3b>(i, j)[0] = imageA.at<Vec3b>(i, j)[0];
-                } else {
-                    imageS.at<Vec3b>(i, j)[0] = imageB.at<Vec3b>(i, j)[0];
-                }
-                if (deltaA[1] > deltaB[1]) {
-                    imageS.at<Vec3b>(i, j)[1] = imageA.at<Vec3b>(i, j)[1];
-                } else {
-                    imageS.at<Vec3b>(i, j)[1] = imageB.at<Vec3b>(i, j)[1];
-                }
-                if (deltaA[2] > deltaB[2]) {
-                    imageS.at<Vec3b>(i, j)[2] = imageA.at<Vec3b>(i, j)[2];
-                } else {
-                    imageS.at<Vec3b>(i, j)[2] = imageB.at<Vec3b>(i, j)[2];
+                // 计算匹配度
+                for (int rgb = 0; rgb < 3; rgb++) {
+                    matchDegree[rgb] = pow(matchDegree[rgb], 2) / (deltaA[rgb] * deltaB[rgb]);
+
+                    if (isnan(matchDegree[rgb]) || matchDegree[rgb] < matchDegreeLimit) {
+                        if (deltaA[rgb] > deltaB[rgb]) {
+                            imageS.at<Vec3b>(i, j)[rgb] = imageA.at<Vec3b>(i, j)[rgb];
+                        } else {
+                            imageS.at<Vec3b>(i, j)[rgb] = imageB.at<Vec3b>(i, j)[rgb];
+                        }
+                    } else {
+                        double wMin = 0.5 * (1 - (1 - matchDegree[rgb])/(1 - matchDegreeLimit));
+                        imageS.at<Vec3b>(i, j)[rgb] = min(imageA.at<Vec3b>(i, j)[rgb], imageB.at<Vec3b>(i, j)[rgb]) * wMin + max(imageA.at<Vec3b>(i, j)[rgb], imageB.at<Vec3b>(i, j)[rgb]) * (1 - wMin);
+                    }
                 }
             }
         }
@@ -142,12 +144,12 @@ void blendLaplacianPyramids(LapPyr& pyrA, LapPyr& pyrB, LapPyr& pyrS, Mat& dst) 
     // 拉普拉斯金字塔各层分别融合
     for (int idx = 0; idx < pyrS.size(); idx++) {
         pyrS[idx] = pyrA[idx].clone();
-        if (idx == pyrS.size() - 1) {
-            blendLaplacianPyramidsByXYDir(pyrA[idx], pyrB[idx], pyrS[idx]);
-        } else {
-            blendLaplacianPyramidsByRE(pyrA[idx], pyrB[idx], pyrS[idx]);
-        }
-        // blendLaplacianPyramidsByRE(pyrA[idx], pyrB[idx], pyrS[idx]);
+//        if (idx == pyrS.size() - 1) {
+//            blendLaplacianPyramidsByXYDir(pyrA[idx], pyrB[idx], pyrS[idx]);
+//        } else {
+//            blendLaplacianPyramidsByRE(pyrA[idx], pyrB[idx], pyrS[idx]);
+//        }
+        blendLaplacianPyramidsByRE(pyrA[idx], pyrB[idx], pyrS[idx]);
     }
 
     // 输出图像
@@ -181,12 +183,12 @@ int main()
     // AVATAR_PATH IMG1_PATH
 
     // 图像A 拉普拉斯金字塔
-    Mat srcA = imread(IMG1_PATH);
+    Mat srcA = imread(AVATAR1_PATH);
     buildLaplacianPyramids(srcA, LA);
     // showLaplacianPyramids(LA);
 
     // 图像B 拉普拉斯金字塔
-    Mat srcB = imread(IMG2_PATH);
+    Mat srcB = imread(AVATAR2_PATH);
     buildLaplacianPyramids(srcB, LB);
     // showLaplacianPyramids(LB);
 
