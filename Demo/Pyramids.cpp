@@ -226,16 +226,38 @@ void ssr(Mat& src, Mat& dst, double sigma) {
 
 // msr
 void msr(Mat& img, Mat& dst, const vector<double>& sigmas) {
-    Mat start = Mat::zeros(img.size(), CV_8UC3);
-    ssr(img, start, sigmas[0]);
-    vector<decltype(start)> matrices;
+
+    vector<Mat> matrices;
     for (size_t i = 1; i < sigmas.size(); ++i) {
-        Mat next = Mat::zeros(img.size(), CV_8UC3);
-        ssr(img, next, sigmas[i]);
-        matrices.emplace_back(next);
+        // begin ssr
+        Mat srcFloat = Mat::zeros(img.size(), CV_32FC3);
+        Mat srcBlur = Mat::zeros(img.size(), img.type());
+        Mat srcBlurFloat = Mat::zeros(img.size(), CV_32FC3);
+        Mat result = Mat::zeros(img.size(), CV_32FC3);
+
+        // 源图像转换成浮点
+        img.convertTo(srcFloat, CV_32FC3);
+
+        // 转对数
+        srcFloat += 0.01;
+        log(srcFloat, srcFloat);
+
+        // 源图像滤波
+        GaussianBlur(img, srcBlur, Size(0, 0), sigmas[i]);
+        srcBlur.convertTo(srcBlurFloat, CV_32FC3);
+        srcBlurFloat += 0.01;
+        // 转对数
+        srcFloat += 0.01;
+        log(srcBlurFloat, srcBlurFloat);
+
+        result = (srcFloat - srcBlurFloat) / log(10);
+
+        matrices.emplace_back(result);
     }
 
-    dst = std::accumulate(matrices.begin(), matrices.end(), start) / sigmas.size();
+    Mat result = Mat::zeros(img.size(), CV_32FC3);
+    result = std::accumulate(matrices.begin(), matrices.end(), result) / sigmas.size();
+    convertTo8UC3(result, dst);
 }
 
 using LapPyr = vector<Mat>;
@@ -475,8 +497,8 @@ int main() {
     // 图像A 拉普拉斯金字塔
     Mat srcA = imread(AVATAR1_PATH);
     Mat srcASSR = Mat::zeros(srcA.size(), CV_8UC3);
-    ssr(srcA, srcASSR, 80);
-    // msr(srcA, srcASSR, {15, 80, 250});
+    // ssr(srcA, srcASSR, 80);
+    msr(srcA, srcASSR, {15, 80, 250});
     imshow("ssr", srcASSR);
     buildLaplacianPyramids(srcASSR, LA);
     // showLaplacianPyramids(LA);
