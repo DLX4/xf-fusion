@@ -197,6 +197,34 @@ void convertTo8UC3(Mat& imageFrom, Mat& imageTo) {
     }
 }
 
+//   CV_8UC3 转 CV_32FC3
+void convertTo32FC3(Mat& imageFrom, Mat& imageTo) {
+    int height = imageFrom.rows;
+    int width = imageFrom.cols;
+
+    for (int i = 0; i < height; i++) {
+        for(int j = 0; j < width; j++) {
+            for (int rgb = 0; rgb < 3; rgb++) {
+                imageTo.at<Vec3f>(i, j)[rgb] = imageFrom.at<Vec3b>(i, j)[rgb];
+            }
+        }
+    }
+}
+
+// 对数运算前去掉0值
+void killZero(Mat& image) {
+    int height = image.rows;
+    int width = image.cols;
+
+    for (int i = 0; i < height; i++) {
+        for(int j = 0; j < width; j++) {
+            for (int rgb = 0; rgb < 3; rgb++) {
+                image.at<Vec3f>(i, j)[rgb] += 10;
+            }
+        }
+    }
+}
+
 // 图像增强
 void ssr(Mat& src, Mat& dst, double sigma) {
     Mat srcFloat = Mat::zeros(src.size(), CV_32FC3);
@@ -205,18 +233,17 @@ void ssr(Mat& src, Mat& dst, double sigma) {
     Mat result = Mat::zeros(src.size(), CV_32FC3);
 
     // 源图像转换成浮点
-    src.convertTo(srcFloat, CV_32FC3);
+    convertTo32FC3(src, srcFloat);
 
     // 转对数
-    srcFloat += 0.01;
+    killZero(srcFloat);
     log(srcFloat, srcFloat);
 
     // 源图像滤波
     GaussianBlur(src, srcBlur, Size(0, 0), sigma);
-    srcBlur.convertTo(srcBlurFloat, CV_32FC3);
-    srcBlurFloat += 0.01;
+    convertTo32FC3(srcBlur, srcBlurFloat);
     // 转对数
-    srcFloat += 0.01;
+    killZero(srcBlurFloat);
     log(srcBlurFloat, srcBlurFloat);
 
     result = (srcFloat - srcBlurFloat) / log(10);
@@ -237,17 +264,15 @@ void msr(Mat& img, Mat& dst, const vector<double>& sigmas) {
 
         // 源图像转换成浮点
         img.convertTo(srcFloat, CV_32FC3);
-
         // 转对数
-        srcFloat += 0.01;
+        killZero(srcFloat);
         log(srcFloat, srcFloat);
 
         // 源图像滤波
         GaussianBlur(img, srcBlur, Size(0, 0), sigmas[i]);
         srcBlur.convertTo(srcBlurFloat, CV_32FC3);
-        srcBlurFloat += 0.01;
         // 转对数
-        srcFloat += 0.01;
+        killZero(srcBlurFloat);
         log(srcBlurFloat, srcBlurFloat);
 
         result = (srcFloat - srcBlurFloat) / log(10);
@@ -497,8 +522,8 @@ int main() {
     // 图像A 拉普拉斯金字塔
     Mat srcA = imread(AVATAR1_PATH);
     Mat srcASSR = Mat::zeros(srcA.size(), CV_8UC3);
-    // ssr(srcA, srcASSR, 80);
-    msr(srcA, srcASSR, {15, 80, 250});
+    ssr(srcA, srcASSR, 80);
+    // msr(srcA, srcASSR, {15, 80, 250});
     imshow("ssr", srcASSR);
     buildLaplacianPyramids(srcASSR, LA);
     // showLaplacianPyramids(LA);
