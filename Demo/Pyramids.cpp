@@ -10,8 +10,10 @@
 using namespace std;
 using namespace cv;
 
-#define IMG1_PATH "D:\\code\\dan-qt\\Demo\\test1.bmp"
-#define IMG2_PATH "D:\\code\\dan-qt\\Demo\\test2.bmp"
+#define IMG11_PATH "D:\\code\\dan-qt\\Demo\\test1.bmp"
+#define IMG12_PATH "D:\\code\\dan-qt\\Demo\\test2.bmp"
+#define IMG21_PATH "D:\\code\\dan-qt\\Demo\\left.png"
+#define IMG22_PATH "D:\\code\\dan-qt\\Demo\\right.png"
 #define AVATAR1_PATH "D:\\code\\dan-qt\\Demo\\avatar.jpg"
 #define AVATAR2_PATH "D:\\code\\dan-qt\\Demo\\avatar2.jpg"
 // 将mat输出到文件
@@ -194,28 +196,6 @@ void convertTo8UC3(Mat& imageFrom, Mat& imageTo) {
         }
     }
 }
-Mat singleScaleRetinex(const Mat& img, double sigma) {
-    Mat mat;
-    img.convertTo(mat, CV_32F);
-    Mat gauss(img.size(), img.type());
-    GaussianBlur(img, gauss, Size(0, 0), sigma);
-    gauss.convertTo(gauss, CV_32F);
-
-    /**
-     * retinex = np.log10(img) - np.log10(cv2.GaussianBlur(img, (0, 0), sigma))
-     * &
-     * lg - log_10
-     * ln - log_e
-     * lg(a) = ln(a) / ln(10)
-     */
-    log(mat, mat);
-    log(gauss, gauss);
-    auto den = log(10);
-    mat -= gauss;
-    mat /= den;
-    // mat.convertTo(mat, img.type());
-    return mat;
-}
 
 // 图像增强
 void ssr(Mat& src, Mat& dst, double sigma) {
@@ -242,6 +222,20 @@ void ssr(Mat& src, Mat& dst, double sigma) {
     result = (srcFloat - srcBlurFloat) / log(10);
     imshow("float", result);
     convertTo8UC3(result, dst);
+}
+
+// msr
+void msr(Mat& img, Mat& dst, const vector<double>& sigmas) {
+    Mat start = Mat::zeros(img.size(), CV_8UC3);
+    ssr(img, start, sigmas[0]);
+    vector<decltype(start)> matrices;
+    for (size_t i = 1; i < sigmas.size(); ++i) {
+        Mat next = Mat::zeros(img.size(), CV_8UC3);
+        ssr(img, next, sigmas[i]);
+        matrices.emplace_back(next);
+    }
+
+    dst = std::accumulate(matrices.begin(), matrices.end(), start) / sigmas.size();
 }
 
 using LapPyr = vector<Mat>;
@@ -479,15 +473,16 @@ int main() {
     // AVATAR_PATH IMG1_PATH
 
     // 图像A 拉普拉斯金字塔
-    Mat srcA = imread(IMG1_PATH);
+    Mat srcA = imread(AVATAR1_PATH);
     Mat srcASSR = Mat::zeros(srcA.size(), CV_8UC3);
     ssr(srcA, srcASSR, 80);
+    // msr(srcA, srcASSR, {15, 80, 250});
     imshow("ssr", srcASSR);
     buildLaplacianPyramids(srcASSR, LA);
     // showLaplacianPyramids(LA);
 
     // 图像B 拉普拉斯金字塔
-    Mat srcB = imread(IMG2_PATH);
+    Mat srcB = imread(AVATAR2_PATH);
     buildLaplacianPyramids(srcB, LB);
     // showLaplacianPyramids(LB);
 
