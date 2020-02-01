@@ -161,8 +161,59 @@ Mat histogramCal(const Mat& image) {
     return histImage;
 }
 
-//  CV_32FC3 转 CV_8UC3
-void convertTo8UC3(Mat& imageFrom, Mat& imageTo) {
+// 线性运算 ax+b
+void linearTransform(Mat& image, int a, int b) {
+    int height = image.rows;
+    int width = image.cols;
+
+    for (int i = 0; i < height; i++) {
+        for(int j = 0; j < width; j++) {
+            for (int rgb = 0; rgb < 3; rgb++) {
+                image.at<Vec3f>(i, j)[rgb] = a * image.at<Vec3f>(i, j)[rgb] + b;
+            }
+        }
+    }
+}
+
+//  CV_32FC3 转 CV_8UC3  *128 + 128
+void convertTo8UC3Way1(Mat& imageFrom, Mat& imageTo) {
+    int height = imageFrom.rows;
+    int width = imageFrom.cols;
+
+    // 方法3
+//    double min = 0.0;
+//    double max = 1.0;
+//    minMaxIdx(imageFrom, &min, &max);
+
+    // 方法1
+    // normalize(imageFrom, imageFrom, 0, 1, NORM_L2);
+
+    // 方法2
+    linearTransform(imageFrom, 128, 128);
+
+    for (int i = 0; i < height; i++) {
+        for(int j = 0; j < width; j++) {
+            for (int rgb = 0; rgb < 3; rgb++) {
+                // double value = (imageFrom.at<Vec3f>(i, j)[rgb] - min) * 255 / (max - min);
+                double value = (imageFrom.at<Vec3f>(i, j)[rgb]);
+
+                if ( value > 255) {
+                    imageTo.at<Vec3b>(i, j)[rgb] = 255;
+                } else if (value < 0) {
+                    imageTo.at<Vec3b>(i, j)[rgb] = 0;
+                } else {
+                    imageTo.at<Vec3b>(i, j)[rgb] = (uchar)value;
+                }
+
+            }
+        }
+    }
+}
+
+#define THRESHOLD_LOG 16;
+
+//  CV_32FC3 转 CV_8UC3 像素重映射
+void convertTo8UC3Way2(Mat& imageFrom, Mat& imageTo) {
     int height = imageFrom.rows;
     int width = imageFrom.cols;
 
@@ -175,8 +226,7 @@ void convertTo8UC3(Mat& imageFrom, Mat& imageTo) {
     // normalize(imageFrom, imageFrom, 0, 1, NORM_L2);
 
     // 方法2
-    // imageFrom *= 128;
-    // imageFrom += 200;
+    // linearTransform(imageFrom, 128, 128);
 
     for (int i = 0; i < height; i++) {
         for(int j = 0; j < width; j++) {
@@ -184,6 +234,7 @@ void convertTo8UC3(Mat& imageFrom, Mat& imageTo) {
                 double value = (imageFrom.at<Vec3f>(i, j)[rgb] - min) * 255 / (max - min);
                 // double value = (imageFrom.at<Vec3f>(i, j)[rgb]);
 
+                value -= THRESHOLD_LOG;
                 if ( value > 255) {
                     imageTo.at<Vec3b>(i, j)[rgb] = 255;
                 } else if (value < 0) {
@@ -219,7 +270,10 @@ void killZero(Mat& image) {
     for (int i = 0; i < height; i++) {
         for(int j = 0; j < width; j++) {
             for (int rgb = 0; rgb < 3; rgb++) {
-                image.at<Vec3f>(i, j)[rgb] += 10;
+                image.at<Vec3f>(i, j)[rgb] += THRESHOLD_LOG;
+//                if (image.at<Vec3f>(i, j)[rgb] == 0) {
+//                    image.at<Vec3f>(i, j)[rgb] = 10;
+//                }
             }
         }
     }
@@ -247,8 +301,9 @@ void ssr(Mat& src, Mat& dst, double sigma) {
     log(srcBlurFloat, srcBlurFloat);
 
     result = (srcFloat - srcBlurFloat) / log(10);
+    // result = (srcFloat - srcBlurFloat);
     imshow("float", result);
-    convertTo8UC3(result, dst);
+    convertTo8UC3Way2(result, dst);
 }
 
 // msr
@@ -276,13 +331,14 @@ void msr(Mat& img, Mat& dst, const vector<double>& sigmas) {
         log(srcBlurFloat, srcBlurFloat);
 
         result = (srcFloat - srcBlurFloat) / log(10);
+        // result = (srcFloat - srcBlurFloat);
 
         matrices.emplace_back(result);
     }
 
     Mat result = Mat::zeros(img.size(), CV_32FC3);
     result = std::accumulate(matrices.begin(), matrices.end(), result) / sigmas.size();
-    convertTo8UC3(result, dst);
+    convertTo8UC3Way2(result, dst);
 }
 
 using LapPyr = vector<Mat>;
@@ -520,16 +576,16 @@ int main() {
     // AVATAR_PATH IMG1_PATH
 
     // 图像A 拉普拉斯金字塔
-    Mat srcA = imread(AVATAR1_PATH);
+    Mat srcA = imread(IMG11_PATH);
     Mat srcASSR = Mat::zeros(srcA.size(), CV_8UC3);
-    ssr(srcA, srcASSR, 80);
-    // msr(srcA, srcASSR, {15, 80, 250});
-    imshow("ssr", srcASSR);
+    // ssr(srcA, srcASSR, 120);
+    msr(srcA, srcASSR, {15, 80, 250});
+    imshow("msr", srcASSR);
     buildLaplacianPyramids(srcASSR, LA);
     // showLaplacianPyramids(LA);
 
     // 图像B 拉普拉斯金字塔
-    Mat srcB = imread(AVATAR2_PATH);
+    Mat srcB = imread(IMG12_PATH);
     buildLaplacianPyramids(srcB, LB);
     // showLaplacianPyramids(LB);
 
