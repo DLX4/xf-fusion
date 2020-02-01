@@ -522,9 +522,9 @@ int main() {
     imshow("3", dst3);
     waitKey(0);
 
-    writeMatToFile(dst1, "D:\\code\\dan-qt\\Demo\\dst1.txt");
-    writeMatToFile(dst2, "D:\\code\\dan-qt\\Demo\\dst2.txt");
-    writeMatToFile(dst3, "D:\\code\\dan-qt\\Demo\\dst3.txt");
+    // writeMatToFile(dst1, "D:\\code\\dan-qt\\Demo\\dst1.txt");
+    // writeMatToFile(dst2, "D:\\code\\dan-qt\\Demo\\dst2.txt");
+    // writeMatToFile(dst3, "D:\\code\\dan-qt\\Demo\\dst3.txt");
 
     return 0;
 }
