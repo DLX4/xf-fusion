@@ -354,8 +354,8 @@ void blendLaplacianPyramidsByXYDir(Mat& imageA, Mat& imageB, Mat& imageS) {
             // 不检查边界
             if ((i > 1) && (i < (height - 2)) && (j > 1) && (j < (width - 2))) {
                 // 3*3
-                int deltaA[3] = {0};
-                int deltaB[3] = {0};
+                double deltaA[3] = {0};
+                double deltaB[3] = {0};
                 for (int rowOffset = -1; rowOffset <= 1; rowOffset++) {
                     for (int colOffset= -1; colOffset <= 1; colOffset++) {
                         for (int rgb = 0; rgb < 3; rgb++) {
@@ -584,7 +584,7 @@ int main() {
     // AVATAR_PATH IMG1_PATH
 
     // 图像A 拉普拉斯金字塔
-    Mat srcA = imread(IMG11_PATH);
+    Mat srcA = imread(IMG31_PATH);
     Mat srcASSR = Mat::zeros(srcA.size(), CV_8UC3);
     // ssr(srcA, srcASSR, 15);
     msr(srcA, srcASSR, {15, 80, 250});
@@ -593,7 +593,7 @@ int main() {
     // showLaplacianPyramids(LA);
 
     // 图像B 拉普拉斯金字塔
-    Mat srcB = imread(IMG12_PATH);
+    Mat srcB = imread(IMG32_PATH);
     buildLaplacianPyramids(srcB, LB);
     // showLaplacianPyramids(LB);
 
