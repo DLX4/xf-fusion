@@ -72,42 +72,9 @@ void linearTransform(Mat& image, int a, int b) {
     }
 }
 
-//  将ssr msr处理过的图像从对数空间转到实数空间（线性运算）  x*128 + 128
-void convertTo8UC3Way1(Mat& imageFrom, Mat& imageTo) {
-    int height = imageFrom.rows;
-    int width = imageFrom.cols;
-
-    linearTransform(imageFrom, 128, 128);
-
-    for (int i = 0; i < height; i++) {
-        for(int j = 0; j < width; j++) {
-            for (int rgb = 0; rgb < 3; rgb++) {
-                // double value = (imageFrom.at<Vec3f>(i, j)[rgb] - min) * 255 / (max - min);
-                double value = (imageFrom.at<Vec3f>(i, j)[rgb]);
-
-                if ( value > 255) {
-                    imageTo.at<Vec3b>(i, j)[rgb] = 255;
-                } else if (value < 0) {
-                    imageTo.at<Vec3b>(i, j)[rgb] = 0;
-                } else {
-                    imageTo.at<Vec3b>(i, j)[rgb] = (uchar)value;
-                }
-            }
-        }
-    }
-}
-
-#define THRESHOLD_LOG 16
-
-// 将ssr msr处理过的图像从对数空间转到实数空间（归一化+过曝伽马变换）
+// 伽马变换
 #define THRESHOLD_GAMMA 128
-void convertTo8UC3Way2(Mat& imageFrom, Mat& imageTo) {
-    // 归一化
-    normalize(imageFrom, imageFrom, 0, 255, CV_MINMAX);
-
-    // 转换成8bit图像
-    convertScaleAbs(imageFrom, imageFrom);
-
+void gamma(Mat& imageFrom, Mat& imageTo) {
     // 计算平均灰度
     Mat gray;
     double brightness = 0.0;
@@ -133,6 +100,76 @@ void convertTo8UC3Way2(Mat& imageFrom, Mat& imageTo) {
         // 转换成8bit图像显示
         convertScaleAbs(imageGamma, imageTo);
     }
+}
+
+//  将ssr msr处理过的图像从对数空间转到实数空间（线性运算）  x*128 + 128
+void convertTo8UC3Way1(Mat& imageFrom, Mat& imageTo) {
+    int height = imageFrom.rows;
+    int width = imageFrom.cols;
+
+    linearTransform(imageFrom, 128, 128);
+
+    for (int i = 0; i < height; i++) {
+        for(int j = 0; j < width; j++) {
+            for (int rgb = 0; rgb < 3; rgb++) {
+                // double value = (imageFrom.at<Vec3f>(i, j)[rgb] - min) * 255 / (max - min);
+                double value = (imageFrom.at<Vec3f>(i, j)[rgb]);
+
+                if ( value > 255) {
+                    imageTo.at<Vec3b>(i, j)[rgb] = 255;
+                } else if (value < 0) {
+                    imageTo.at<Vec3b>(i, j)[rgb] = 0;
+                } else {
+                    imageTo.at<Vec3b>(i, j)[rgb] = (uchar)value;
+                }
+            }
+        }
+    }
+}
+
+#define THRESHOLD_LOG 1
+
+// 将ssr msr处理过的图像从对数空间转到实数空间（归一化+过曝伽马变换）
+#define DYNAMIC 2
+void convertTo8UC3Way2(Mat& imageFrom, Mat& imageTo) {
+    // 归一化
+    // 分通道分别计算均值，均方差
+    vector<Mat> channelMatrices(imageFrom.channels());
+    vector<double> means(imageFrom.channels());
+    vector<double> sds(imageFrom.channels());
+    vector<double> mins(imageFrom.channels());
+    vector<double> maxs(imageFrom.channels());
+
+    split(imageFrom, channelMatrices);
+    for ( int i = 0; i < channelMatrices.size(); i++) {
+        Mat tmpMean;
+        Mat tmpSd;
+        Mat& channelMat = channelMatrices[i];
+        meanStdDev(channelMat, tmpMean, tmpSd);
+        means[i] = tmpMean.at<double>(0,0);
+        sds[i] = tmpSd.at<double>(0,0);
+        mins[i] = means[i] - DYNAMIC * sds[i];
+        maxs[i] = means[i] + DYNAMIC * sds[i];
+    }
+
+    for (int i = 0; i < imageFrom.rows; i++) {
+        for(int j = 0; j < imageFrom.cols; j++) {
+            for (int rgb = 0; rgb < 3; rgb++) {
+                double value = (imageFrom.at<Vec3f>(i, j)[rgb] - mins[rgb]) * 255 / (maxs[rgb] - mins[rgb]);
+
+                if ( value > 255) {
+                    imageFrom.at<Vec3f>(i, j)[rgb] = 255;
+                } else if (value < 0) {
+                    imageFrom.at<Vec3f>(i, j)[rgb] = 0;
+                } else {
+                    imageFrom.at<Vec3f>(i, j)[rgb] = (uchar)value;
+                }
+            }
+        }
+    }
+
+    // 转换成8bit图像
+    convertScaleAbs(imageFrom, imageTo);
 }
 
 //   CV_8UC3 转 CV_32FC3
