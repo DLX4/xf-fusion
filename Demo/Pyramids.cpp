@@ -16,7 +16,7 @@ using namespace cv;
 #define IMG22_PATH "D:\\code\\dan-qt\\Demo\\right.png"
 #define AVATAR1_PATH "D:\\code\\dan-qt\\Demo\\avatar.jpg"
 #define AVATAR2_PATH "D:\\code\\dan-qt\\Demo\\avatar2.jpg"
-// 将mat输出到文件
+// 将mat输出到文件，便于调试
 void writeMatToFile(Mat& m, const char* filename) {
     ofstream fout(filename);
 
@@ -34,7 +34,7 @@ void writeMatToFile(Mat& m, const char* filename) {
     fout.close();
 }
 
-// 浮点图像
+// 浮点图像mat输出到文件，便于调试
 void writeMatToFile2(Mat& m, const char* filename) {
     ofstream fout(filename);
 
@@ -210,7 +210,7 @@ void convertTo8UC3Way1(Mat& imageFrom, Mat& imageTo) {
     }
 }
 
-#define THRESHOLD_LOG 16;
+#define THRESHOLD_LOG 16
 
 //  CV_32FC3 转 CV_8UC3 像素重映射
 void convertTo8UC3Way2(Mat& imageFrom, Mat& imageTo) {
@@ -231,7 +231,7 @@ void convertTo8UC3Way2(Mat& imageFrom, Mat& imageTo) {
     for (int i = 0; i < height; i++) {
         for(int j = 0; j < width; j++) {
             for (int rgb = 0; rgb < 3; rgb++) {
-                double value = (imageFrom.at<Vec3f>(i, j)[rgb] - min) * 255 / (max - min);
+                double value = (imageFrom.at<Vec3f>(i, j)[rgb] - min) * (255 - THRESHOLD_LOG) / (max - min);
                 // double value = (imageFrom.at<Vec3f>(i, j)[rgb]);
 
                 value -= THRESHOLD_LOG;
@@ -520,6 +520,28 @@ void blendLaplacianPyramidsByRE1(Mat& imageA, Mat& imageB, Mat& imageS) {
     }
 }
 
+// 顶层融合策略: 选取亮度较大的图片
+void blendLaplacianPyramidsByBrightness(Mat& imageA, Mat& imageB, Mat& imageS) {
+    Mat grayA;
+    Mat grayB;
+    double brightnessA = 0.0;
+    double brightnessB = 0.0;
+
+    cvtColor(imageA, grayA, CV_RGB2GRAY);
+    Scalar scalar = mean(grayA);
+    brightnessA = scalar.val[0];
+
+    cvtColor(imageB, grayB, CV_RGB2GRAY);
+    scalar = mean(grayB);
+    brightnessB = scalar.val[0];
+
+    if (brightnessA >= brightnessB) {
+        imageS = imageA;
+    } else {
+        imageS = imageB;
+    }
+}
+
 // 将两个原图像的拉普拉斯金字塔融合
 void blendLaplacianPyramids(LapPyr& pyrA, LapPyr& pyrB, LapPyr& pyrS, Mat& dst, int strategy) {
     pyrS.clear();
@@ -541,6 +563,13 @@ void blendLaplacianPyramids(LapPyr& pyrA, LapPyr& pyrB, LapPyr& pyrS, Mat& dst, 
             break;
         case 3:
             blendLaplacianPyramidsByRE2(pyrA[idx], pyrB[idx], pyrS[idx]);
+            break;
+        case 4:
+            if (idx == pyrS.size() - 1) {
+                blendLaplacianPyramidsByBrightness(pyrA[idx], pyrB[idx], pyrS[idx]);
+            } else {
+                blendLaplacianPyramidsByRE2(pyrA[idx], pyrB[idx], pyrS[idx]);
+            }
             break;
         default:
             break;
@@ -576,7 +605,7 @@ int main() {
     // AVATAR_PATH IMG1_PATH
 
     // 图像A 拉普拉斯金字塔
-    Mat srcA = imread(IMG11_PATH);
+    Mat srcA = imread(AVATAR1_PATH);
     Mat srcASSR = Mat::zeros(srcA.size(), CV_8UC3);
     // ssr(srcA, srcASSR, 120);
     msr(srcA, srcASSR, {15, 80, 250});
@@ -585,7 +614,7 @@ int main() {
     // showLaplacianPyramids(LA);
 
     // 图像B 拉普拉斯金字塔
-    Mat srcB = imread(IMG12_PATH);
+    Mat srcB = imread(AVATAR2_PATH);
     buildLaplacianPyramids(srcB, LB);
     // showLaplacianPyramids(LB);
 
@@ -601,6 +630,11 @@ int main() {
     Mat dst3;
     blendLaplacianPyramids(LA, LB, LS, dst3, 3);
     imshow("3", dst3);
+
+    Mat dst4;
+    blendLaplacianPyramids(LA, LB, LS, dst4, 4);
+    imshow("4", dst4);
+
     waitKey(0);
 
     // writeMatToFile(dst1, "D:\\code\\dan-qt\\Demo\\dst1.txt");
