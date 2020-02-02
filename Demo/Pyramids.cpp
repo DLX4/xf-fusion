@@ -72,7 +72,7 @@ void linearTransform(Mat& image, int a, int b) {
     }
 }
 
-//  CV_32FC3 转 CV_8UC3  *128 + 128
+//  将ssr msr处理过的图像从对数空间转到实数空间（线性运算）  x*128 + 128
 void convertTo8UC3Way1(Mat& imageFrom, Mat& imageTo) {
     int height = imageFrom.rows;
     int width = imageFrom.cols;
@@ -99,12 +99,13 @@ void convertTo8UC3Way1(Mat& imageFrom, Mat& imageTo) {
 
 #define THRESHOLD_LOG 16
 
-//
+// 将ssr msr处理过的图像从对数空间转到实数空间（归一化+过曝伽马变换）
+#define THRESHOLD_GAMMA 128
 void convertTo8UC3Way2(Mat& imageFrom, Mat& imageTo) {
-    // 方法1
+    // 归一化
     normalize(imageFrom, imageFrom, 0, 255, CV_MINMAX);
 
-    //转换成8bit图像显示
+    // 转换成8bit图像
     convertScaleAbs(imageFrom, imageFrom);
 
     // 计算平均灰度
@@ -117,7 +118,7 @@ void convertTo8UC3Way2(Mat& imageFrom, Mat& imageTo) {
     std::cout << "brightnes--------" << std::endl;
     std::cout << brightness << std::endl;
 
-    if (brightness > 128) {
+    if (brightness > THRESHOLD_GAMMA) {
         // 伽马变换对于图像对比度偏低，并且整体亮度值偏高（对于于相机过曝）情况下的图像增强效果明显。
         Mat imageGamma(imageFrom.size(), CV_32FC3);
         for (int i = 0; i < imageFrom.rows; i++) {
