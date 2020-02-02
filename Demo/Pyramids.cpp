@@ -9,11 +9,17 @@
 
 using namespace std;
 using namespace cv;
+#define IMG011_PATH "D:\\code\\dan-qt\\Demo\\01b.jpg"
+#define IMG012_PATH "D:\\code\\dan-qt\\Demo\\01a.jpg"
 
 #define IMG11_PATH "D:\\code\\dan-qt\\Demo\\test1.bmp"
 #define IMG12_PATH "D:\\code\\dan-qt\\Demo\\test2.bmp"
 #define IMG21_PATH "D:\\code\\dan-qt\\Demo\\left.png"
 #define IMG22_PATH "D:\\code\\dan-qt\\Demo\\right.png"
+
+#define IMG31_PATH "D:\\code\\dan-qt\\Demo\\test31.bmp"
+#define IMG32_PATH "D:\\code\\dan-qt\\Demo\\test32.bmp"
+
 #define AVATAR1_PATH "D:\\code\\dan-qt\\Demo\\avatar.jpg"
 #define AVATAR2_PATH "D:\\code\\dan-qt\\Demo\\avatar2.jpg"
 // 将mat输出到文件，便于调试
@@ -605,7 +611,7 @@ int main() {
     // AVATAR_PATH IMG1_PATH
 
     // 图像A 拉普拉斯金字塔
-    Mat srcA = imread(AVATAR1_PATH);
+    Mat srcA = imread(IMG31_PATH);
     Mat srcASSR = Mat::zeros(srcA.size(), CV_8UC3);
     // ssr(srcA, srcASSR, 120);
     msr(srcA, srcASSR, {15, 80, 250});
@@ -614,7 +620,7 @@ int main() {
     // showLaplacianPyramids(LA);
 
     // 图像B 拉普拉斯金字塔
-    Mat srcB = imread(AVATAR2_PATH);
+    Mat srcB = imread(IMG32_PATH);
     buildLaplacianPyramids(srcB, LB);
     // showLaplacianPyramids(LB);
 
