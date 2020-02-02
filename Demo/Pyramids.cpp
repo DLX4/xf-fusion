@@ -9,17 +9,22 @@
 
 using namespace std;
 using namespace cv;
+// 路灯监控
 #define IMG011_PATH "D:\\code\\dan-qt\\Demo\\01b.jpg"
 #define IMG012_PATH "D:\\code\\dan-qt\\Demo\\01a.jpg"
-
+// 人在山里
 #define IMG11_PATH "D:\\code\\dan-qt\\Demo\\test1.bmp"
 #define IMG12_PATH "D:\\code\\dan-qt\\Demo\\test2.bmp"
+// 电线杆
 #define IMG21_PATH "D:\\code\\dan-qt\\Demo\\left.png"
 #define IMG22_PATH "D:\\code\\dan-qt\\Demo\\right.png"
-
+// 烟雾弹 士兵
 #define IMG31_PATH "D:\\code\\dan-qt\\Demo\\test31.bmp"
 #define IMG32_PATH "D:\\code\\dan-qt\\Demo\\test32.bmp"
-
+// 老照片
+#define IMGTEMP1_PATH "D:\\code\\dan-qt\\Demo\\temp1.jpg"
+#define IMGTEMP2_PATH "D:\\code\\dan-qt\\Demo\\temp2.jpg"
+// 头像
 #define AVATAR1_PATH "D:\\code\\dan-qt\\Demo\\avatar.jpg"
 #define AVATAR2_PATH "D:\\code\\dan-qt\\Demo\\avatar2.jpg"
 // 将mat输出到文件，便于调试
@@ -102,6 +107,17 @@ void gamma(Mat& imageFrom, Mat& imageTo) {
     }
 }
 
+// 计算并打印图片的亮度
+void showBrightness(Mat& image) {
+    Mat gray;
+    double brightness = 0.0;
+    cvtColor(image, gray, CV_RGB2GRAY);
+    Scalar scalar = mean(gray);
+    brightness = scalar.val[0];
+
+    std::cout << "brightnes=" << brightness << std::endl;
+}
+
 //  将ssr msr处理过的图像从对数空间转到实数空间（线性运算）  x*128 + 128
 void convertTo8UC3Way1(Mat& imageFrom, Mat& imageTo) {
     int height = imageFrom.rows;
@@ -170,6 +186,45 @@ void convertTo8UC3Way2(Mat& imageFrom, Mat& imageTo) {
 
     // 转换成8bit图像
     convertScaleAbs(imageFrom, imageTo);
+}
+
+// 重新调整图片亮度
+void restoreBrightness(Mat& imageFrom) {
+    // 归一化
+    // 分通道分别计算均值，均方差
+    vector<Mat> channelMatrices(imageFrom.channels());
+    vector<double> means(imageFrom.channels());
+    vector<double> sds(imageFrom.channels());
+    vector<double> mins(imageFrom.channels());
+    vector<double> maxs(imageFrom.channels());
+
+    split(imageFrom, channelMatrices);
+    for ( int i = 0; i < channelMatrices.size(); i++) {
+        Mat tmpMean;
+        Mat tmpSd;
+        Mat& channelMat = channelMatrices[i];
+        meanStdDev(channelMat, tmpMean, tmpSd);
+        means[i] = tmpMean.at<double>(0,0);
+        sds[i] = tmpSd.at<double>(0,0);
+        mins[i] = means[i] - DYNAMIC * sds[i];
+        maxs[i] = means[i] + DYNAMIC * sds[i];
+    }
+
+    for (int i = 0; i < imageFrom.rows; i++) {
+        for(int j = 0; j < imageFrom.cols; j++) {
+            for (int rgb = 0; rgb < 3; rgb++) {
+                double value = (imageFrom.at<Vec3b>(i, j)[rgb] - mins[rgb]) * 255 / (maxs[rgb] - mins[rgb]);
+
+                if ( value > 255) {
+                    imageFrom.at<Vec3b>(i, j)[rgb] = 255;
+                } else if (value < 0) {
+                    imageFrom.at<Vec3b>(i, j)[rgb] = 0;
+                } else {
+                    imageFrom.at<Vec3b>(i, j)[rgb] = (uchar)value;
+                }
+            }
+        }
+    }
 }
 
 //   CV_8UC3 转 CV_32FC3
@@ -529,7 +584,7 @@ int main() {
     // AVATAR_PATH IMG1_PATH
 
     // 图像A 拉普拉斯金字塔
-    Mat srcA = imread(IMG31_PATH);
+    Mat srcA = imread(IMG11_PATH);
     Mat srcASSR = Mat::zeros(srcA.size(), CV_8UC3);
     // ssr(srcA, srcASSR, 15);
     msr(srcA, srcASSR, {15, 80, 250});
@@ -538,26 +593,35 @@ int main() {
     // showLaplacianPyramids(LA);
 
     // 图像B 拉普拉斯金字塔
-    Mat srcB = imread(IMG32_PATH);
+    Mat srcB = imread(IMG12_PATH);
     buildLaplacianPyramids(srcB, LB);
     // showLaplacianPyramids(LB);
 
     // 融合
     Mat dst1;
     blendLaplacianPyramids(LA, LB, LS, dst1, 1);
+    restoreBrightness(dst1);
     imshow("1", dst1);
 
     Mat dst2;
     blendLaplacianPyramids(LA, LB, LS, dst2, 2);
+    restoreBrightness(dst2);
     imshow("2", dst2);
 
     Mat dst3;
     blendLaplacianPyramids(LA, LB, LS, dst3, 3);
+    restoreBrightness(dst3);
     imshow("3", dst3);
 
     Mat dst4;
     blendLaplacianPyramids(LA, LB, LS, dst4, 4);
+    restoreBrightness(dst4);
     imshow("4", dst4);
+
+    showBrightness(dst1);
+    showBrightness(dst2);
+    showBrightness(dst3);
+    showBrightness(dst4);
 
     waitKey(0);
 
