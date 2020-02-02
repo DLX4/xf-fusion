@@ -58,115 +58,6 @@ void writeMatToFile2(Mat& m, const char* filename) {
     fout.close();
 }
 
-// 完美反射  白平衡算法
-Mat PerfectReflectionAlgorithm(Mat src) {
-    int row = src.rows;
-    int col = src.cols;
-    Mat dst(row, col, CV_8UC3);
-    int HistRGB[767] = { 0 };
-    int MaxVal = 0;
-    for (int i = 0; i < row; i++) {
-        for (int j = 0; j < col; j++) {
-            MaxVal = max(MaxVal, (int)src.at<Vec3b>(i, j)[0]);
-            MaxVal = max(MaxVal, (int)src.at<Vec3b>(i, j)[1]);
-            MaxVal = max(MaxVal, (int)src.at<Vec3b>(i, j)[2]);
-            int sum = src.at<Vec3b>(i, j)[0] + src.at<Vec3b>(i, j)[1] + src.at<Vec3b>(i, j)[2];
-            HistRGB[sum]++;
-        }
-    }
-    int Threshold = 0;
-    int sum = 0;
-    for (int i = 766; i >= 0; i--) {
-        sum += HistRGB[i];
-        if (sum > row * col * 0.1) {
-            Threshold = i;
-            break;
-        }
-    }
-    int AvgB = 0;
-    int AvgG = 0;
-    int AvgR = 0;
-    int cnt = 0;
-    for (int i = 0; i < row; i++) {
-        for (int j = 0; j < col; j++) {
-            int sumP = src.at<Vec3b>(i, j)[0] + src.at<Vec3b>(i, j)[1] + src.at<Vec3b>(i, j)[2];
-            if (sumP > Threshold) {
-                AvgB += src.at<Vec3b>(i, j)[0];
-                AvgG += src.at<Vec3b>(i, j)[1];
-                AvgR += src.at<Vec3b>(i, j)[2];
-                cnt++;
-            }
-        }
-    }
-    AvgB /= cnt;
-    AvgG /= cnt;
-    AvgR /= cnt;
-    for (int i = 0; i < row; i++) {
-        for (int j = 0; j < col; j++) {
-            int Blue = src.at<Vec3b>(i, j)[0] * MaxVal / AvgB;
-            int Green = src.at<Vec3b>(i, j)[1] * MaxVal / AvgG;
-            int Red = src.at<Vec3b>(i, j)[2] * MaxVal / AvgR;
-            if (Red > 255) {
-                Red = 255;
-            }
-            else if (Red < 0) {
-                Red = 0;
-            }
-            if (Green > 255) {
-                Green = 255;
-            }
-            else if (Green < 0) {
-                Green = 0;
-            }
-            if (Blue > 255) {
-                Blue = 255;
-            }
-            else if (Blue < 0) {
-                Blue = 0;
-            }
-            dst.at<Vec3b>(i, j)[0] = Blue;
-            dst.at<Vec3b>(i, j)[1] = Green;
-            dst.at<Vec3b>(i, j)[2] = Red;
-        }
-    }
-    return dst;
-}
-
-// 直方图均衡
-Mat histogramCal(const Mat& image) {
-    int histSize = 255;                //直方图的最大像素值
-    float range[] = { 0,256 };
-    const float* histRange = { range };
-    vector<Mat> bgr;                   //存储图像的矩阵
-    split(image, bgr);                 //将彩色图像分割成，b,g,r分别存储
-    bool uniform = true, accumulate = false;
-    Mat b_hist, g_hist, r_hist;
-    //分别计算各个波段的直方图
-    calcHist(&bgr[0], 1, 0, Mat(), b_hist, 1, &histSize, &histRange, uniform, accumulate);
-    calcHist(&bgr[1], 1, 0, Mat(), g_hist, 1, &histSize, &histRange, uniform, accumulate);
-    calcHist(&bgr[2], 1, 0, Mat(), r_hist, 1, &histSize, &histRange, uniform, accumulate);
-
-    //绘制直方图
-    int hist_w = 512, hist_h = 400;
-    int bin_w = cvRound((double)hist_w / histSize);
-
-    Mat histImage(hist_h, hist_w, CV_8U, Scalar(0, 0, 0));
-    //将结果归一化[0,histImage.rows]
-    normalize(b_hist,b_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat());
-    normalize(g_hist, g_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat());
-    normalize(r_hist, r_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat());
-
-    for (int i = 1; i < histSize; i++) {
-        line(histImage, Point(bin_w*(i - 1), hist_h - cvRound(b_hist.at<float>(i - 1))),
-            Point(bin_w*(i), hist_h - cvRound(b_hist.at<float>(i))), Scalar(255, 0, 0));
-        line(histImage, Point(bin_w*(i - 1), hist_h - cvRound(g_hist.at<float>(i - 1))),
-            Point(bin_w*(i), hist_h - cvRound(g_hist.at<float>(i))), Scalar(0, 255, 0));
-        line(histImage, Point(bin_w*(i - 1), hist_h - cvRound(r_hist.at<float>(i - 1))),
-            Point(bin_w*(i), hist_h - cvRound(r_hist.at<float>(i))), Scalar(0, 0, 255));
-    }
-    return histImage;
-}
-
 // 线性运算 ax+b
 void linearTransform(Mat& image, int a, int b) {
     int height = image.rows;
@@ -186,15 +77,6 @@ void convertTo8UC3Way1(Mat& imageFrom, Mat& imageTo) {
     int height = imageFrom.rows;
     int width = imageFrom.cols;
 
-    // 方法3
-//    double min = 0.0;
-//    double max = 1.0;
-//    minMaxIdx(imageFrom, &min, &max);
-
-    // 方法1
-    // normalize(imageFrom, imageFrom, 0, 1, NORM_L2);
-
-    // 方法2
     linearTransform(imageFrom, 128, 128);
 
     for (int i = 0; i < height; i++) {
@@ -210,7 +92,6 @@ void convertTo8UC3Way1(Mat& imageFrom, Mat& imageTo) {
                 } else {
                     imageTo.at<Vec3b>(i, j)[rgb] = (uchar)value;
                 }
-
             }
         }
     }
@@ -218,39 +99,38 @@ void convertTo8UC3Way1(Mat& imageFrom, Mat& imageTo) {
 
 #define THRESHOLD_LOG 16
 
-//  CV_32FC3 转 CV_8UC3 像素重映射
+//
 void convertTo8UC3Way2(Mat& imageFrom, Mat& imageTo) {
-    int height = imageFrom.rows;
-    int width = imageFrom.cols;
-
-    // 方法3
-    double min = 0.0;
-    double max = 1.0;
-    minMaxIdx(imageFrom, &min, &max);
-
     // 方法1
-    // normalize(imageFrom, imageFrom, 0, 1, NORM_L2);
+    normalize(imageFrom, imageFrom, 0, 255, CV_MINMAX);
 
-    // 方法2
-    // linearTransform(imageFrom, 128, 128);
+    //转换成8bit图像显示
+    convertScaleAbs(imageFrom, imageFrom);
 
-    for (int i = 0; i < height; i++) {
-        for(int j = 0; j < width; j++) {
-            for (int rgb = 0; rgb < 3; rgb++) {
-                double value = (imageFrom.at<Vec3f>(i, j)[rgb] - min) * (255 - THRESHOLD_LOG) / (max - min);
-                // double value = (imageFrom.at<Vec3f>(i, j)[rgb]);
+    // 计算平均灰度
+    Mat gray;
+    double brightness = 0.0;
+    cvtColor(imageFrom, gray, CV_RGB2GRAY);
+    Scalar scalar = mean(gray);
+    brightness = scalar.val[0];
 
-                value -= THRESHOLD_LOG;
-                if ( value > 255) {
-                    imageTo.at<Vec3b>(i, j)[rgb] = 255;
-                } else if (value < 0) {
-                    imageTo.at<Vec3b>(i, j)[rgb] = 0;
-                } else {
-                    imageTo.at<Vec3b>(i, j)[rgb] = (uchar)value;
-                }
+    std::cout << "brightnes--------" << std::endl;
+    std::cout << brightness << std::endl;
 
+    if (brightness > 128) {
+        // 伽马变换对于图像对比度偏低，并且整体亮度值偏高（对于于相机过曝）情况下的图像增强效果明显。
+        Mat imageGamma(imageFrom.size(), CV_32FC3);
+        for (int i = 0; i < imageFrom.rows; i++) {
+            for (int j = 0; j < imageFrom.cols; j++) {
+                imageGamma.at<Vec3f>(i, j)[0] = (imageFrom.at<Vec3b>(i, j)[0])*(imageFrom.at<Vec3b>(i, j)[0])*(imageFrom.at<Vec3b>(i, j)[0]);
+                imageGamma.at<Vec3f>(i, j)[1] = (imageFrom.at<Vec3b>(i, j)[1])*(imageFrom.at<Vec3b>(i, j)[1])*(imageFrom.at<Vec3b>(i, j)[1]);
+                imageGamma.at<Vec3f>(i, j)[2] = (imageFrom.at<Vec3b>(i, j)[2])*(imageFrom.at<Vec3b>(i, j)[2])*(imageFrom.at<Vec3b>(i, j)[2]);
             }
         }
+        // 归一化到0~255
+        normalize(imageGamma, imageGamma, 0, 255, CV_MINMAX);
+        // 转换成8bit图像显示
+        convertScaleAbs(imageGamma, imageTo);
     }
 }
 
@@ -277,9 +157,6 @@ void killZero(Mat& image) {
         for(int j = 0; j < width; j++) {
             for (int rgb = 0; rgb < 3; rgb++) {
                 image.at<Vec3f>(i, j)[rgb] += THRESHOLD_LOG;
-//                if (image.at<Vec3f>(i, j)[rgb] == 0) {
-//                    image.at<Vec3f>(i, j)[rgb] = 10;
-//                }
             }
         }
     }
@@ -541,6 +418,9 @@ void blendLaplacianPyramidsByBrightness(Mat& imageA, Mat& imageB, Mat& imageS) {
     scalar = mean(grayB);
     brightnessB = scalar.val[0];
 
+    std::cout << brightnessA << std::endl;
+    std::cout << brightnessB << std::endl;
+
     if (brightnessA >= brightnessB) {
         imageS = imageA;
     } else {
@@ -613,7 +493,7 @@ int main() {
     // 图像A 拉普拉斯金字塔
     Mat srcA = imread(IMG31_PATH);
     Mat srcASSR = Mat::zeros(srcA.size(), CV_8UC3);
-    // ssr(srcA, srcASSR, 120);
+    // ssr(srcA, srcASSR, 15);
     msr(srcA, srcASSR, {15, 80, 250});
     imshow("msr", srcASSR);
     buildLaplacianPyramids(srcASSR, LA);
