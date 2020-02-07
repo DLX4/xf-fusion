@@ -10,26 +10,26 @@
 using namespace std;
 using namespace cv;
 // 路灯监控
-#define IMG011_PATH "D:\\code\\dan-qt\\fusion\\image\\01b.jpg"
-#define IMG012_PATH "D:\\code\\dan-qt\\fusion\\image\\01a.jpg"
+#define IMG011_PATH "..\\image\\01b.jpg"
+#define IMG012_PATH "..\\image\\01a.jpg"
 // 人在山里
-#define IMG11_PATH "D:\\code\\dan-qt\\fusion\\image\\test1.bmp"
-#define IMG12_PATH "D:\\code\\dan-qt\\fusion\\image\\test2.bmp"
+#define IMG11_PATH "..\\image\\test1.bmp"
+#define IMG12_PATH "..\\image\\test2.bmp"
 // 电线杆
-#define IMG21_PATH "D:\\code\\dan-qt\\fusion\\image\\left.png"
-#define IMG22_PATH "D:\\code\\dan-qt\\fusion\\image\\right.png"
+#define IMG21_PATH "..\\image\\left.png"
+#define IMG22_PATH "..\\image\\right.png"
 // 烟雾弹 士兵
-#define IMG31_PATH "D:\\code\\dan-qt\\fusion\\image\\test31.bmp"
-#define IMG32_PATH "D:\\code\\dan-qt\\fusion\\image\\test32.bmp"
+#define IMG31_PATH "..\\image\\test31.bmp"
+#define IMG32_PATH "..\\image\\test32.bmp"
 // 老照片
-#define IMGTEMP1_PATH "D:\\code\\dan-qt\\fusion\\image\\temp1.jpg"
-#define IMGTEMP2_PATH "D:\\code\\dan-qt\\fusion\\image\\temp2.jpg"
+#define IMGTEMP1_PATH "..\\image\\temp1.jpg"
+#define IMGTEMP2_PATH "..\\image\\temp2.jpg"
 // 头像
-#define AVATAR1_PATH "D:\\code\\dan-qt\\fusion\\image\\avatar.jpg"
-#define AVATAR2_PATH "D:\\code\\dan-qt\\fusion\\image\\avatar2.jpg"
+#define AVATAR1_PATH "..\\image\\avatar.jpg"
+#define AVATAR2_PATH "..\\image\\avatar2.jpg"
 
-#define FLIR_00001_1 "D:\\code\\dan-qt\\fusion\\image\\FLIR_video_00001.jpg"
-#define FLIR_00001_2 "D:\\code\\dan-qt\\fusion\\image\\FLIR_video_00001.jpeg"
+#define FLIR_00001_1 "..\\image\\FLIR_video_00001.jpg"
+#define FLIR_00001_2 "..\\image\\FLIR_video_00001.jpeg"
 // 将mat输出到文件，便于调试
 void writeMatToFile(Mat& m, const char* filename) {
     ofstream fout(filename);
@@ -587,7 +587,7 @@ int main() {
     // AVATAR_PATH IMG1_PATH
 
     // 图像A 拉普拉斯金字塔
-    Mat srcA = imread(AVATAR1_PATH);
+    Mat srcA = imread(IMG11_PATH);
     Mat srcASSR = Mat::zeros(srcA.size(), CV_8UC3);
     // ssr(srcA, srcASSR, 15);
     msr(srcA, srcASSR, {15, 80, 250});
@@ -596,7 +596,7 @@ int main() {
     // showLaplacianPyramids(LA);
 
     // 图像B 拉普拉斯金字塔
-    Mat srcB = imread(AVATAR2_PATH);
+    Mat srcB = imread(IMG12_PATH);
     buildLaplacianPyramids(srcB, LB);
     // showLaplacianPyramids(LB);
 
@@ -628,9 +628,9 @@ int main() {
 
     waitKey(0);
 
-    // writeMatToFile(dst1, "D:\\code\\dan-qt\\fusion\\dst1.txt");
-    // writeMatToFile(dst2, "D:\\code\\dan-qt\\fusion\\dst2.txt");
-    // writeMatToFile(dst3, "D:\\code\\dan-qt\\fusion\\dst3.txt");
+    // writeMatToFile(dst1, "..\\dst1.txt");
+    // writeMatToFile(dst2, "..\\dst2.txt");
+    // writeMatToFile(dst3, "..\\dst3.txt");
 
     return 0;
 }
