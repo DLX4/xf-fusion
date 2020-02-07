@@ -1,5 +1,6 @@
 #ifndef _TOP_H_
 #define _TOP_H_
+
 #include "hls_video.h"
 // maximum image size
 #define MAX_WIDTH 1920
