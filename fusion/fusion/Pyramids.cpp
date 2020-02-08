@@ -192,16 +192,16 @@ void convertTo8UC3Way2(Mat& imageFrom, Mat& imageTo) {
 }
 
 // 重新调整图片亮度
-void restoreBrightness(Mat& imageFrom) {
+void restoreBrightness(Mat& src, Mat& dst) {
     // 归一化
     // 分通道分别计算均值，均方差
-    vector<Mat> channelMatrices(imageFrom.channels());
-    vector<double> means(imageFrom.channels());
-    vector<double> sds(imageFrom.channels());
-    vector<double> mins(imageFrom.channels());
-    vector<double> maxs(imageFrom.channels());
+    vector<Mat> channelMatrices(src.channels());
+    vector<double> means(src.channels());
+    vector<double> sds(src.channels());
+    vector<double> mins(src.channels());
+    vector<double> maxs(src.channels());
 
-    split(imageFrom, channelMatrices);
+    split(src, channelMatrices);
     for ( int i = 0; i < channelMatrices.size(); i++) {
         Mat tmpMean;
         Mat tmpSd;
@@ -213,17 +213,17 @@ void restoreBrightness(Mat& imageFrom) {
         maxs[i] = means[i] + DYNAMIC * sds[i];
     }
 
-    for (int i = 0; i < imageFrom.rows; i++) {
-        for(int j = 0; j < imageFrom.cols; j++) {
+    for (int i = 0; i < dst.rows; i++) {
+        for(int j = 0; j < dst.cols; j++) {
             for (int rgb = 0; rgb < 3; rgb++) {
-                double value = (imageFrom.at<Vec3b>(i, j)[rgb] - mins[rgb]) * 255 / (maxs[rgb] - mins[rgb]);
+                double value = (src.at<Vec3b>(i, j)[rgb] - mins[rgb]) * 255 / (maxs[rgb] - mins[rgb]);
 
                 if ( value > 255) {
-                    imageFrom.at<Vec3b>(i, j)[rgb] = 255;
+                    dst.at<Vec3b>(i, j)[rgb] = 255;
                 } else if (value < 0) {
-                    imageFrom.at<Vec3b>(i, j)[rgb] = 0;
+                    dst.at<Vec3b>(i, j)[rgb] = 0;
                 } else {
-                    imageFrom.at<Vec3b>(i, j)[rgb] = (uchar)value;
+                    dst.at<Vec3b>(i, j)[rgb] = (uchar)value;
                 }
             }
         }
@@ -569,7 +569,7 @@ void blendLaplacianPyramids(LapPyr& pyrA, LapPyr& pyrB, LapPyr& pyrS, Mat& dst, 
         addWeighted(pyrS[i - 1], 1, expend, 1, 0, add);
         pyrS[i - 1] = add.clone();
     }
-    dst = pyrS[0].clone();
+    restoreBrightness(pyrS[0], dst);
 }
 
 void showLaplacianPyramids(LapPyr& pyr) {
@@ -579,46 +579,45 @@ void showLaplacianPyramids(LapPyr& pyr) {
     }
 }
 
-int main() {
+// 图像融合顶层函数
+void blend(Mat& srcA, Mat& srcB, Mat& dst, int strategy) {
     LapPyr LA;
     LapPyr LB;
     LapPyr LS;
-
-    // AVATAR_PATH IMG1_PATH
-
     // 图像A 拉普拉斯金字塔
-    Mat srcA = imread(IMG11_PATH);
     Mat srcASSR = Mat::zeros(srcA.size(), CV_8UC3);
-    // ssr(srcA, srcASSR, 15);
     msr(srcA, srcASSR, {15, 80, 250});
-    imshow("msr", srcASSR);
+
     buildLaplacianPyramids(srcASSR, LA);
     // showLaplacianPyramids(LA);
 
     // 图像B 拉普拉斯金字塔
-    Mat srcB = imread(IMG12_PATH);
     buildLaplacianPyramids(srcB, LB);
     // showLaplacianPyramids(LB);
 
     // 融合
-    Mat dst1;
-    blendLaplacianPyramids(LA, LB, LS, dst1, 1);
-    restoreBrightness(dst1);
+    blendLaplacianPyramids(LA, LB, LS, dst, strategy);
+}
+
+int main() {
+    Mat srcA = imread(IMG11_PATH);
+    Mat srcB = imread(IMG12_PATH);
+
+    // 融合
+    Mat dst1 = Mat::zeros(srcA.size(), CV_8UC3);
+    blend(srcA, srcB, dst1, 1);
     imshow("1", dst1);
 
-    Mat dst2;
-    blendLaplacianPyramids(LA, LB, LS, dst2, 2);
-    restoreBrightness(dst2);
+    Mat dst2 = Mat::zeros(srcA.size(), CV_8UC3);
+    blend(srcA, srcB, dst2, 2);
     imshow("2", dst2);
 
-    Mat dst3;
-    blendLaplacianPyramids(LA, LB, LS, dst3, 3);
-    restoreBrightness(dst3);
+    Mat dst3 = Mat::zeros(srcA.size(), CV_8UC3);
+    blend(srcA, srcB, dst3, 3);
     imshow("3", dst3);
 
-    Mat dst4;
-    blendLaplacianPyramids(LA, LB, LS, dst4, 4);
-    restoreBrightness(dst4);
+    Mat dst4 = Mat::zeros(srcA.size(), CV_8UC3);
+    blend(srcA, srcB, dst4, 4);
     imshow("4", dst4);
 
     showBrightness(dst1);
