@@ -334,15 +334,17 @@ void buildLaplacianPyramids(Mat& src, LapPyr& pyr, int octvs=5) {
         Mat down;
         pyrDown(pyr[i - 1], down);
         pyr[i] = down.clone();
+    }
 
+    for (int i = 1; i < octvs; i++) {
         // upscale 2x
         Mat expend;
-        pyrUp(down, expend, pyr[i - 1].size());
+        pyrUp(pyr[i], expend, pyr[i - 1].size());
 
         // 上一层高斯金字塔减去本层高斯金字塔*2 得到上一层拉普拉斯金字塔
         Mat subtract;
-        addWeighted(pyr[i - 1], 1, expend, -1, 0, subtract);
-        pyr[i - 1] = subtract.clone();
+        addWeighted(pyr[i - 1], 1, expend, -1, 0, pyr[i - 1]);
+        // = subtract.clone();
     }
 }
 
@@ -600,8 +602,8 @@ void blend(Mat& srcA, Mat& srcB, Mat& dst, int strategy) {
 }
 
 int main() {
-    Mat srcA = imread(IMG11_PATH);
-    Mat srcB = imread(IMG12_PATH);
+    Mat srcA = imread(AVATAR1_PATH);
+    Mat srcB = imread(AVATAR2_PATH);
 
     // 融合
     Mat dst1 = Mat::zeros(srcA.size(), CV_8UC3);
