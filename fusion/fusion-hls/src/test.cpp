@@ -36,5 +36,5 @@ int main (int argc, char** argv)
 	imageB.copyTo(srcB.data);
 	// ÈÚºÏ
 	blend(imageA, imageB, dst);
-	xf::imwrite("blend.jpg", dst);
+	// xf::imwrite("blend.jpg", dst);
 }

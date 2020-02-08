@@ -10,8 +10,11 @@
 #include "imgproc/xf_pyr_up.hpp"
 #include "imgproc/xf_add_weighted.hpp"
 #include "core/xf_mean_stddev.hpp"
+#include "core/xf_arithm.hpp"
+// สýัง
+#include "hls_math.h"
 // imwrite
-#include "common/xf_sw_utils.h"
+// #include "common/xf_sw_utils.h"
 /* Optimization type */
 #define RO  0 // Resource Optimized (8-pixel implementation)
 #define NO  1 // Normal Operation (1-pixel implementation)
