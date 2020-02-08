@@ -8,6 +8,7 @@
 #include "imgproc/xf_dilation.hpp"
 #include "imgproc/xf_pyr_down.hpp"
 #include "imgproc/xf_pyr_up.hpp"
+#include "imgproc/xf_histogram.hpp"
 
 /* Optimization type */
 #define RO  0 // Resource Optimized (8-pixel implementation)
