@@ -1,4 +1,5 @@
 #include <cmath>
+#include "hls_math.h"
 #include <fstream>
 #include <iostream>
 #include <iomanip>
@@ -14,6 +15,12 @@ data_t cpp_math_sw(data_t angle) {
 	data_t s = sinf(angle);
 	data_t c = cosf(angle);
 	return sqrtf(s * s + c * c);
+}
+
+data_t cpp_math2(data_t angle) {
+	data_t s = hls::sinf(angle);
+	data_t c = hls::cosf(angle);
+	return hls::sqrtf(s * s + c * c);
 }
 
 int main() {
