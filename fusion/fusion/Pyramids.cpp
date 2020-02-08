@@ -108,8 +108,6 @@ void restoreBrightness(Mat& src, Mat& dst) {
     }
 }
 
-
-
 // 通过源图像构造拉普拉斯金字塔 (注意：图像的长宽需要被16整除)
 void buildLaplacianPyramids(Mat& src, Mat& pyr0, Mat& pyr1, Mat& pyr2, Mat& pyr3, Mat& pyr4) {
     pyr0 = src;

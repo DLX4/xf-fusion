@@ -8,15 +8,17 @@
 #include "imgproc/xf_dilation.hpp"
 #include "imgproc/xf_pyr_down.hpp"
 #include "imgproc/xf_pyr_up.hpp"
-#include "imgproc/xf_histogram.hpp"
-
+#include "imgproc/xf_add_weighted.hpp"
+#include "core/xf_mean_stddev.hpp"
+// imwrite
+#include "common/xf_sw_utils.h"
 /* Optimization type */
 #define RO  0 // Resource Optimized (8-pixel implementation)
 #define NO  1 // Normal Operation (1-pixel implementation)
 
 /* config width and height */
-#define WIDTH 	1920
-#define HEIGHT	1080
+#define WIDTH 	960
+#define HEIGHT	960
 
 /*  define the input and output types  */
 #if NO
@@ -27,7 +29,7 @@
 #define NPC1 XF_NPPC8
 #endif
 
-#define TYPE XF_8UC3
+#define TYPE XF_8UC1
 
 // Í¼ÏñÈÚºÏ¶¥²ãº¯Êý
 void blend(xf::Mat<TYPE, HEIGHT, WIDTH, NPC1>& srcA, xf::Mat<TYPE, HEIGHT, WIDTH, NPC1>& srcB, xf::Mat<TYPE, HEIGHT, WIDTH, NPC1>& dst);

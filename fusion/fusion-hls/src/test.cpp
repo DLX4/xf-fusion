@@ -4,59 +4,37 @@
 #include <iostream>
 #include <fstream>
 #include "ap_int.h"
-#include "hls_stream.h"
 
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/core/core.hpp"
 #include "opencv2/opencv.hpp"
-using namespace std;
-using namespace cv;
-using LapPyr = vector<Mat>;
 
-#define IMG11_PATH "test1.bmp"
-#define IMG12_PATH "test2.bmp"
+#include "xf_fusion.h"
+
+// 头像
+#define AVATAR1_PATH "avatar.jpg"
+#define AVATAR2_PATH "avatar2.jpg"
 
 int main (int argc, char** argv)
 {
-    LapPyr LA;
-    LapPyr LB;
-    LapPyr LS;
+	cv::Mat srcA_RGB = cv::imread(AVATAR1_PATH);
+	cv::Mat srcB_RGB = cv::imread(AVATAR2_PATH);
 
-    // AVATAR_PATH IMG1_PATH
+	cv::Mat srcA;
+	cv::Mat srcB;
+	cv::Mat output;
+	cv::cvtColor(srcA_RGB, srcA, CV_RGB2GRAY);
+	cv::cvtColor(srcB_RGB, srcB, CV_RGB2GRAY);
+	output.create(srcA.rows, srcA.cols, CV_8UC1);
 
-    // 图像A 拉普拉斯金字塔
-    Mat srcA = imread(IMG11_PATH);
-    Mat srcASSR = Mat::zeros(srcA.size(), CV_8UC3);
-    // ssr(srcA, srcASSR, 15);
-    msr(srcA, srcASSR, {15, 80, 250});
-    imshow("msr", srcASSR);
-    buildLaplacianPyramids(srcASSR, LA);
-    // showLaplacianPyramids(LA);
+	xf::Mat<TYPE, HEIGHT, WIDTH, NPC1> imageA(srcA.rows, srcA.cols);
+	xf::Mat<TYPE, HEIGHT, WIDTH, NPC1> imageB(srcB.rows, srcB.cols);
+	xf::Mat<TYPE, HEIGHT, WIDTH, NPC1> dst(srcA.rows, srcA.cols);
 
-    // 图像B 拉普拉斯金字塔
-    Mat srcB = imread(IMG12_PATH);
-    buildLaplacianPyramids(srcB, LB);
-    // showLaplacianPyramids(LB);
-
-    // 融合
-    Mat dst1;
-    blendLaplacianPyramids(LA, LB, LS, dst1, 1);
-    restoreBrightness(dst1);
-    imshow("1", dst1);
-
-    Mat dst2;
-    blendLaplacianPyramids(LA, LB, LS, dst2, 2);
-    restoreBrightness(dst2);
-    imshow("2", dst2);
-
-    Mat dst3;
-    blendLaplacianPyramids(LA, LB, LS, dst3, 3);
-    restoreBrightness(dst3);
-    imshow("3", dst3);
-
-    Mat dst4;
-    blendLaplacianPyramids(LA, LB, LS, dst4, 4);
-    restoreBrightness(dst4);
-    imshow("4", dst4);
+	imageA.copyTo(srcA.data);
+	imageB.copyTo(srcB.data);
+	// 融合
+	blend(imageA, imageB, dst);
+	xf::imwrite("blend.jpg", dst);
 }
