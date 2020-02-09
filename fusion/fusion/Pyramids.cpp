@@ -93,6 +93,8 @@ void restoreBrightness(Mat& src, Mat& dst) {
     mins = means - DYNAMIC * sds;
     maxs = means + DYNAMIC * sds;
 
+    std::cout << "means= " << means << "; sds= " << sds << std::endl;
+
     for (int i = 0; i < dst.rows; i++) {
         for(int j = 0; j < dst.cols; j++) {
             double value = (src.at<uchar>(i, j) - mins) * 255 / (maxs - mins);
