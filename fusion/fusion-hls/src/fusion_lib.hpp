@@ -56,8 +56,10 @@ void restoreBrightness(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src, xf::Mat<_TYPE, RO
 }
 
 template<int ROWS, int COLS>
-void pyrDownUpDown(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src, xf::Mat<_TYPE, ROWS/2, COLS/2, _NPC1>& dst) {
-	xf::Mat<_TYPE, ROWS, COLS, _NPC1> temp(ROWS, COLS);
+void pyrDownUpDown(
+		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src,
+		xf::Mat<_TYPE, ROWS/2, COLS/2, _NPC1>& dst,
+		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp) {
 	xf::pyrDown<_TYPE, ROWS, COLS,  _NPC1, true>(src, temp);
 	int width = dst.cols;
 	int height = dst.rows;
@@ -74,16 +76,16 @@ void buildLaplacianPyramids(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src,
 		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyr0, xf::Mat<_TYPE, ROWS/2, COLS/2, _NPC1>& pyr1, xf::Mat<_TYPE, ROWS/4, COLS/4, _NPC1>& pyr2, xf::Mat<_TYPE, ROWS/8, COLS/8, _NPC1>& pyr3, xf::Mat<_TYPE, ROWS/16, COLS/16, _NPC1>& pyr4,
 		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp0, xf::Mat<_TYPE, ROWS/2, COLS/2, _NPC1>& temp1, xf::Mat<_TYPE, ROWS/4, COLS/4, _NPC1>& temp2, xf::Mat<_TYPE, ROWS/8, COLS/8, _NPC1>& temp3, xf::Mat<_TYPE, ROWS/16, COLS/16, _NPC1>& temp4
 ) {
-    pyr0 = src;
+    pyr0.copyTo(src.data);
 
     // 往下构造本层高斯金字塔 第1层
-    pyrDownUpDown<ROWS, COLS>(pyr0, pyr1);
+    pyrDownUpDown<ROWS, COLS>(pyr0, pyr1, temp0);
     // 往下构造本层高斯金字塔 第2层
-    pyrDownUpDown<ROWS/2, COLS/2>(pyr1, pyr2);
+    pyrDownUpDown<ROWS/2, COLS/2>(pyr1, pyr2, temp1);
     // 往下构造本层高斯金字塔 第3层
-    pyrDownUpDown<ROWS/4, COLS/4>(pyr2, pyr3);
+    pyrDownUpDown<ROWS/4, COLS/4>(pyr2, pyr3, temp2);
     // 往下构造本层高斯金字塔 第4层
-    pyrDownUpDown<ROWS/8, COLS/8>(pyr3, pyr4);
+    pyrDownUpDown<ROWS/8, COLS/8>(pyr3, pyr4, temp3);
 
     // 上一层高斯金字塔减去本层高斯金字塔*2得到上一层拉普拉斯金字塔；pyr[0~N]构成了拉普拉斯金字塔；第N层（最后一层）拉普拉斯金字塔同高斯金字塔
     // 第1层
@@ -133,13 +135,13 @@ void blendLaplacianPyramidsByRE2(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageA, xf::
                         int x = i + rowOffset;
                         int y = j + colOffset;
 
-                        deltaA += G[1+rowOffset][1+colOffset] * hls::pow(imageA.read(x*width+y), 2);
-                        deltaB += G[1+rowOffset][1+colOffset] * hls::pow(imageB.read(x*width+y), 2);
+                        deltaA += G[1+rowOffset][1+colOffset] * imageA.read(x*width+y) * imageA.read(x*width+y);
+                        deltaB += G[1+rowOffset][1+colOffset] * imageB.read(x*width+y) * imageB.read(x*width+y);
                         matchDegree += G[1+rowOffset][1+colOffset] * imageA.read(x*width+y) * imageB.read(x*width+y);
                     }
                 }
                 // 计算匹配度
-                matchDegree = hls::pow(matchDegree, (double)2) / (deltaA * deltaB);
+                matchDegree = matchDegree * matchDegree / (deltaA * deltaB);
 
                 if (hls::isnan(matchDegree) || matchDegree < matchDegreeLimit) {
                     if (deltaA == deltaB) {
