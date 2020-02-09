@@ -1,25 +1,10 @@
 #ifndef _XF_FUSION_LIB_
 #define _XF_FUSION_LIB_
-#include "hls_stream.h"
-#include "ap_int.h"
-#include "common/xf_common.h"
-#include "common/xf_utility.h"
-#include "imgproc/xf_dilation.hpp"
-#include "imgproc/xf_pyr_down.hpp"
-#include "imgproc/xf_pyr_up.hpp"
-#include "imgproc/xf_add_weighted.hpp"
-#include "core/xf_mean_stddev.hpp"
-#include "core/xf_arithm.hpp"
-// 数学
-#include "hls_math.h"
+
+#include "xf_fusion.h"
 
 namespace fusion {
-/*  define the input and output _TYPEs  */
-#define _NPC1 XF_NPPC1
 
-#define _TYPE XF_8UC1
-
-#define DYNAMIC 2
 // 重新调整图片亮度
 template<int ROWS, int COLS>
 void restoreBrightness(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& dst) {
@@ -42,7 +27,7 @@ void restoreBrightness(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src, xf::Mat<_TYPE, RO
     int height = dst.rows;
     for (int i = 0; i < height; i++) {
         for(int j = 0; j < width; j++) {
-            double value = (src.read(i*width+j) - mins) * 255 / (maxs - mins);
+            double value = (src.data[i*width+j] - mins) * 255 / (maxs - mins);
 
             if ( value > 255) {
             	dst.write(i*width+j, 255);
@@ -65,10 +50,11 @@ void pyrDownUpDown(
 	int height = dst.rows;
 	for (int i = 0; i < height; i++) {
 		for(int j = 0; j < width; j++) {
-			dst.write(i*width+j, temp.read(i*width+j));
+			dst.write(i*width+j, temp.data[i*width+j]);
 		}
 	}
 }
+
 
 // 通过源图像构造拉普拉斯金字塔 (注意：图像的长宽需要被16整除)
 template<int ROWS, int COLS>
@@ -79,13 +65,13 @@ void buildLaplacianPyramids(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src,
     pyr0.copyTo(src.data);
 
     // 往下构造本层高斯金字塔 第1层
-    pyrDownUpDown<ROWS, COLS>(pyr0, pyr1, temp0);
+    fusion::pyrDownUpDown<ROWS, COLS>(pyr0, pyr1, temp0);
     // 往下构造本层高斯金字塔 第2层
-    pyrDownUpDown<ROWS/2, COLS/2>(pyr1, pyr2, temp1);
+    fusion::pyrDownUpDown<ROWS/2, COLS/2>(pyr1, pyr2, temp1);
     // 往下构造本层高斯金字塔 第3层
-    pyrDownUpDown<ROWS/4, COLS/4>(pyr2, pyr3, temp2);
+    fusion::pyrDownUpDown<ROWS/4, COLS/4>(pyr2, pyr3, temp2);
     // 往下构造本层高斯金字塔 第4层
-    pyrDownUpDown<ROWS/8, COLS/8>(pyr3, pyr4, temp3);
+    fusion::pyrDownUpDown<ROWS/8, COLS/8>(pyr3, pyr4, temp3);
 
     // 上一层高斯金字塔减去本层高斯金字塔*2得到上一层拉普拉斯金字塔；pyr[0~N]构成了拉普拉斯金字塔；第N层（最后一层）拉普拉斯金字塔同高斯金字塔
     // 第1层
@@ -135,9 +121,9 @@ void blendLaplacianPyramidsByRE2(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageA, xf::
                         int x = i + rowOffset;
                         int y = j + colOffset;
 
-                        deltaA += G[1+rowOffset][1+colOffset] * imageA.read(x*width+y) * imageA.read(x*width+y);
-                        deltaB += G[1+rowOffset][1+colOffset] * imageB.read(x*width+y) * imageB.read(x*width+y);
-                        matchDegree += G[1+rowOffset][1+colOffset] * imageA.read(x*width+y) * imageB.read(x*width+y);
+                        deltaA += G[1+rowOffset][1+colOffset] * imageA.data[x*width+y] * imageA.data[x*width+y];
+                        deltaB += G[1+rowOffset][1+colOffset] * imageB.data[x*width+y] * imageB.data[x*width+y];
+                        matchDegree += G[1+rowOffset][1+colOffset] * imageA.data[x*width+y] * imageB.data[x*width+y];
                     }
                 }
                 // 计算匹配度
@@ -145,19 +131,19 @@ void blendLaplacianPyramidsByRE2(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageA, xf::
 
                 if (hls::isnan(matchDegree) || matchDegree < matchDegreeLimit) {
                     if (deltaA == deltaB) {
-                        imageS.write(i*width+j, 0.5 * imageA.read(i*width+j) + 0.5 * imageB.read(i*width+j));
+                        imageS.write(i*width+j, 0.5 * imageA.data[i*width+j] + 0.5 * imageB.data[i*width+j]);
                     } else if (deltaA > deltaB) {
-                        imageS.write(i*width+j, imageA.read(i*width+j));
+                        imageS.write(i*width+j, imageA.data[i*width+j]);
                     } else {
-                        imageS.write(i*width+j, imageB.read(i*width+j));
+                        imageS.write(i*width+j, imageB.data[i*width+j]);
                     }
                 } else {
                     double wMin = 0.5 * (1 - (1 - matchDegree)/(1 - matchDegreeLimit));
-                    imageS.write(i*width+j, hls::min(imageA.read(i*width+j), imageB.read(i*width+j)) * wMin + hls::max(imageA.read(i*width+j), imageB.read(i*width+j)) * (1 - wMin));
+                    imageS.write(i*width+j, hls::min(imageA.data[i*width+j], imageB.data[i*width+j]) * wMin + hls::max(imageA.data[i*width+j], imageB.data[i*width+j]) * (1 - wMin));
                 }
             } else {
                 // 边界55开填充
-                imageS.write(i*width+j, 0.5 * imageA.read(i*width+j) + 0.5 * imageB.read(i*width+j));
+                imageS.write(i*width+j, 0.5 * imageA.data[i*width+j] + 0.5 * imageB.data[i*width+j]);
             }
         }
     }

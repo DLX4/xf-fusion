@@ -37,9 +37,9 @@ static unsigned char tempS2Data [HEIGHT/4 * WIDTH/4] = {0};
 static unsigned char tempS3Data [HEIGHT/8 * WIDTH/8] = {0};
 static unsigned char tempS4Data [HEIGHT/16 * WIDTH/16] = {0};
 void blend(
-		xf::Mat<TYPE, HEIGHT, WIDTH, NPC1>& srcA,
-		xf::Mat<TYPE, HEIGHT, WIDTH, NPC1>& srcB,
-		xf::Mat<TYPE, HEIGHT, WIDTH, NPC1>& dst
+		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& srcA,
+		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& srcB,
+		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& dst
 		) {
 	int height0 = srcA.rows;
 	int width0 = srcA.cols;
@@ -52,41 +52,41 @@ void blend(
 	int height4 = height3 / 2;
 	int width4 = width3 / 2;
 
-	xf::Mat<TYPE, HEIGHT,    WIDTH,    NPC1> pyrA0(height0, width0, (void *)pyrA0Data);
-	xf::Mat<TYPE, HEIGHT/2,  WIDTH/2,  NPC1> pyrA1(height1, width1, (void *)pyrA1Data);
-	xf::Mat<TYPE, HEIGHT/4,  WIDTH/4,  NPC1> pyrA2(height2, width2, (void *)pyrA2Data);
-	xf::Mat<TYPE, HEIGHT/8,  WIDTH/8,  NPC1> pyrA3(height3, width3, (void *)pyrA3Data);
-	xf::Mat<TYPE, HEIGHT/16, WIDTH/16, NPC1> pyrA4(height4, width4, (void *)pyrA4Data);
+	xf::Mat<_TYPE, HEIGHT,    WIDTH,    _NPC1> pyrA0(height0, width0, (void *)pyrA0Data);
+	xf::Mat<_TYPE, HEIGHT/2,  WIDTH/2,  _NPC1> pyrA1(height1, width1, (void *)pyrA1Data);
+	xf::Mat<_TYPE, HEIGHT/4,  WIDTH/4,  _NPC1> pyrA2(height2, width2, (void *)pyrA2Data);
+	xf::Mat<_TYPE, HEIGHT/8,  WIDTH/8,  _NPC1> pyrA3(height3, width3, (void *)pyrA3Data);
+	xf::Mat<_TYPE, HEIGHT/16, WIDTH/16, _NPC1> pyrA4(height4, width4, (void *)pyrA4Data);
 
-	xf::Mat<TYPE, HEIGHT,    WIDTH,    NPC1> pyrA0Temp(height0, width0, (void *)tempA0Data);
-	xf::Mat<TYPE, HEIGHT/2,  WIDTH/2,  NPC1> pyrA1Temp(height1, width1, (void *)tempA1Data);
-	xf::Mat<TYPE, HEIGHT/4,  WIDTH/4,  NPC1> pyrA2Temp(height2, width2, (void *)tempA2Data);
-	xf::Mat<TYPE, HEIGHT/8,  WIDTH/8,  NPC1> pyrA3Temp(height3, width3, (void *)tempA3Data);
-	xf::Mat<TYPE, HEIGHT/16, WIDTH/16, NPC1> pyrA4Temp(height4, width4, (void *)tempA4Data);
+	xf::Mat<_TYPE, HEIGHT,    WIDTH,    _NPC1> pyrA0Temp(height0, width0, (void *)tempA0Data);
+	xf::Mat<_TYPE, HEIGHT/2,  WIDTH/2,  _NPC1> pyrA1Temp(height1, width1, (void *)tempA1Data);
+	xf::Mat<_TYPE, HEIGHT/4,  WIDTH/4,  _NPC1> pyrA2Temp(height2, width2, (void *)tempA2Data);
+	xf::Mat<_TYPE, HEIGHT/8,  WIDTH/8,  _NPC1> pyrA3Temp(height3, width3, (void *)tempA3Data);
+	xf::Mat<_TYPE, HEIGHT/16, WIDTH/16, _NPC1> pyrA4Temp(height4, width4, (void *)tempA4Data);
 
-	xf::Mat<TYPE, HEIGHT,    WIDTH,    NPC1> pyrB0(height0, width0, (void *)pyrB0Data);
-	xf::Mat<TYPE, HEIGHT/2,  WIDTH/2,  NPC1> pyrB1(height1, width1, (void *)pyrB1Data);
-	xf::Mat<TYPE, HEIGHT/4,  WIDTH/4,  NPC1> pyrB2(height2, width2, (void *)pyrB2Data);
-	xf::Mat<TYPE, HEIGHT/8,  WIDTH/8,  NPC1> pyrB3(height3, width3, (void *)pyrB3Data);
-	xf::Mat<TYPE, HEIGHT/16, WIDTH/16, NPC1> pyrB4(height4, width4, (void *)pyrB4Data);
+	xf::Mat<_TYPE, HEIGHT,    WIDTH,    _NPC1> pyrB0(height0, width0, (void *)pyrB0Data);
+	xf::Mat<_TYPE, HEIGHT/2,  WIDTH/2,  _NPC1> pyrB1(height1, width1, (void *)pyrB1Data);
+	xf::Mat<_TYPE, HEIGHT/4,  WIDTH/4,  _NPC1> pyrB2(height2, width2, (void *)pyrB2Data);
+	xf::Mat<_TYPE, HEIGHT/8,  WIDTH/8,  _NPC1> pyrB3(height3, width3, (void *)pyrB3Data);
+	xf::Mat<_TYPE, HEIGHT/16, WIDTH/16, _NPC1> pyrB4(height4, width4, (void *)pyrB4Data);
 
-	xf::Mat<TYPE, HEIGHT,    WIDTH,    NPC1> pyrB0Temp(height0, width0, (void *)tempB0Data);
-	xf::Mat<TYPE, HEIGHT/2,  WIDTH/2,  NPC1> pyrB1Temp(height1, width1, (void *)tempB1Data);
-	xf::Mat<TYPE, HEIGHT/4,  WIDTH/4,  NPC1> pyrB2Temp(height2, width2, (void *)tempB2Data);
-	xf::Mat<TYPE, HEIGHT/8,  WIDTH/8,  NPC1> pyrB3Temp(height3, width3, (void *)tempB3Data);
-	xf::Mat<TYPE, HEIGHT/16, WIDTH/16, NPC1> pyrB4Temp(height4, width4, (void *)tempB4Data);
+	xf::Mat<_TYPE, HEIGHT,    WIDTH,    _NPC1> pyrB0Temp(height0, width0, (void *)tempB0Data);
+	xf::Mat<_TYPE, HEIGHT/2,  WIDTH/2,  _NPC1> pyrB1Temp(height1, width1, (void *)tempB1Data);
+	xf::Mat<_TYPE, HEIGHT/4,  WIDTH/4,  _NPC1> pyrB2Temp(height2, width2, (void *)tempB2Data);
+	xf::Mat<_TYPE, HEIGHT/8,  WIDTH/8,  _NPC1> pyrB3Temp(height3, width3, (void *)tempB3Data);
+	xf::Mat<_TYPE, HEIGHT/16, WIDTH/16, _NPC1> pyrB4Temp(height4, width4, (void *)tempB4Data);
 
-	xf::Mat<TYPE, HEIGHT,    WIDTH,    NPC1> pyrS0(height0, width0, (void *)pyrS0Data);
-	xf::Mat<TYPE, HEIGHT/2,  WIDTH/2,  NPC1> pyrS1(height1, width1, (void *)pyrS1Data);
-	xf::Mat<TYPE, HEIGHT/4,  WIDTH/4,  NPC1> pyrS2(height2, width2, (void *)pyrS2Data);
-	xf::Mat<TYPE, HEIGHT/8,  WIDTH/8,  NPC1> pyrS3(height3, width3, (void *)pyrS3Data);
-	xf::Mat<TYPE, HEIGHT/16, WIDTH/16, NPC1> pyrS4(height4, width4, (void *)pyrS4Data);
+	xf::Mat<_TYPE, HEIGHT,    WIDTH,    _NPC1> pyrS0(height0, width0, (void *)pyrS0Data);
+	xf::Mat<_TYPE, HEIGHT/2,  WIDTH/2,  _NPC1> pyrS1(height1, width1, (void *)pyrS1Data);
+	xf::Mat<_TYPE, HEIGHT/4,  WIDTH/4,  _NPC1> pyrS2(height2, width2, (void *)pyrS2Data);
+	xf::Mat<_TYPE, HEIGHT/8,  WIDTH/8,  _NPC1> pyrS3(height3, width3, (void *)pyrS3Data);
+	xf::Mat<_TYPE, HEIGHT/16, WIDTH/16, _NPC1> pyrS4(height4, width4, (void *)pyrS4Data);
 
-	xf::Mat<TYPE, HEIGHT,    WIDTH,    NPC1> pyrS0Temp(height0, width0, (void *)tempS0Data);
-	xf::Mat<TYPE, HEIGHT/2,  WIDTH/2,  NPC1> pyrS1Temp(height1, width1, (void *)tempS1Data);
-	xf::Mat<TYPE, HEIGHT/4,  WIDTH/4,  NPC1> pyrS2Temp(height2, width2, (void *)tempS2Data);
-	xf::Mat<TYPE, HEIGHT/8,  WIDTH/8,  NPC1> pyrS3Temp(height3, width3, (void *)tempS3Data);
-	xf::Mat<TYPE, HEIGHT/16, WIDTH/16, NPC1> pyrS4Temp(height4, width4, (void *)tempS4Data);
+	xf::Mat<_TYPE, HEIGHT,    WIDTH,    _NPC1> pyrS0Temp(height0, width0, (void *)tempS0Data);
+	xf::Mat<_TYPE, HEIGHT/2,  WIDTH/2,  _NPC1> pyrS1Temp(height1, width1, (void *)tempS1Data);
+	xf::Mat<_TYPE, HEIGHT/4,  WIDTH/4,  _NPC1> pyrS2Temp(height2, width2, (void *)tempS2Data);
+	xf::Mat<_TYPE, HEIGHT/8,  WIDTH/8,  _NPC1> pyrS3Temp(height3, width3, (void *)tempS3Data);
+	xf::Mat<_TYPE, HEIGHT/16, WIDTH/16, _NPC1> pyrS4Temp(height4, width4, (void *)tempS4Data);
 
 	// 图像A 拉普拉斯金字塔
 	fusion::buildLaplacianPyramids<HEIGHT, WIDTH>(
