@@ -70,7 +70,10 @@ void pyrDownUpDown(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src, xf::Mat<_TYPE, ROWS/2
 
 // 通过源图像构造拉普拉斯金字塔 (注意：图像的长宽需要被16整除)
 template<int ROWS, int COLS>
-void buildLaplacianPyramids(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyr0, xf::Mat<_TYPE, ROWS/2, COLS/2, _NPC1>& pyr1, xf::Mat<_TYPE, ROWS/4, COLS/4, _NPC1>& pyr2, xf::Mat<_TYPE, ROWS/8, COLS/8, _NPC1>& pyr3, xf::Mat<_TYPE, ROWS/16, COLS/16, _NPC1>& pyr4) {
+void buildLaplacianPyramids(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src,
+		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyr0, xf::Mat<_TYPE, ROWS/2, COLS/2, _NPC1>& pyr1, xf::Mat<_TYPE, ROWS/4, COLS/4, _NPC1>& pyr2, xf::Mat<_TYPE, ROWS/8, COLS/8, _NPC1>& pyr3, xf::Mat<_TYPE, ROWS/16, COLS/16, _NPC1>& pyr4,
+		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp0, xf::Mat<_TYPE, ROWS/2, COLS/2, _NPC1>& temp1, xf::Mat<_TYPE, ROWS/4, COLS/4, _NPC1>& temp2, xf::Mat<_TYPE, ROWS/8, COLS/8, _NPC1>& temp3, xf::Mat<_TYPE, ROWS/16, COLS/16, _NPC1>& temp4
+) {
     pyr0 = src;
 
     // 往下构造本层高斯金字塔 第1层
@@ -84,24 +87,20 @@ void buildLaplacianPyramids(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src, xf::Mat<_TYP
 
     // 上一层高斯金字塔减去本层高斯金字塔*2得到上一层拉普拉斯金字塔；pyr[0~N]构成了拉普拉斯金字塔；第N层（最后一层）拉普拉斯金字塔同高斯金字塔
     // 第1层
-    xf::Mat<_TYPE, ROWS, COLS, _NPC1> expend1(pyr0.rows, pyr0.cols);// upscale 2x
-    xf::pyrUp<_TYPE, ROWS/2, COLS/2,  _NPC1>(pyr1, expend1);
-    xf::absdiff<_TYPE, ROWS, COLS, _NPC1>(pyr0, expend1, pyr0);
+    xf::pyrUp<_TYPE, ROWS/2, COLS/2,  _NPC1>(pyr1, temp0);
+    xf::absdiff<_TYPE, ROWS, COLS, _NPC1>(pyr0, temp0, pyr0);
 
     // 第2层
-    xf::Mat<_TYPE, ROWS/2, COLS/2, _NPC1> expend2(pyr1.rows, pyr1.cols);// upscale 2x
-    xf::pyrUp<_TYPE, ROWS/4, COLS/4,  _NPC1>(pyr2, expend2);
-    xf::absdiff<_TYPE, ROWS/2, COLS/2, _NPC1>(pyr1, expend2, pyr1);
+    xf::pyrUp<_TYPE, ROWS/4, COLS/4,  _NPC1>(pyr2, temp1);
+    xf::absdiff<_TYPE, ROWS/2, COLS/2, _NPC1>(pyr1, temp1, pyr1);
 
     // 第3层
-    xf::Mat<_TYPE, ROWS/4, COLS/4, _NPC1> expend3(pyr2.rows, pyr2.cols);// upscale 2x
-    xf::pyrUp<_TYPE, ROWS/8, COLS/8,  _NPC1>(pyr3, expend3);
-    xf::absdiff<_TYPE, ROWS/4, COLS/4, _NPC1>(pyr2, expend3, pyr2);
+    xf::pyrUp<_TYPE, ROWS/8, COLS/8,  _NPC1>(pyr3, temp2);
+    xf::absdiff<_TYPE, ROWS/4, COLS/4, _NPC1>(pyr2, temp2, pyr2);
 
     // 第4层
-    xf::Mat<_TYPE, ROWS/8, COLS/8, _NPC1> expend4(pyr3.rows, pyr3.cols);// upscale 2x
-    xf::pyrUp<_TYPE, ROWS/16, COLS/16,  _NPC1>(pyr4, expend4);
-    xf::absdiff<_TYPE, ROWS/8, COLS/8, _NPC1>(pyr3, expend4, pyr3);
+    xf::pyrUp<_TYPE, ROWS/16, COLS/16,  _NPC1>(pyr4, temp3);
+    xf::absdiff<_TYPE, ROWS/8, COLS/8, _NPC1>(pyr3, temp3, pyr3);
 }
 
 
@@ -168,6 +167,7 @@ template<int ROWS, int COLS>
 void blendLaplacianPyramids(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrA0, xf::Mat<_TYPE, ROWS/2, COLS/2, _NPC1>& pyrA1, xf::Mat<_TYPE, ROWS/4, COLS/4, _NPC1>& pyrA2, xf::Mat<_TYPE, ROWS/8, COLS/8, _NPC1>& pyrA3, xf::Mat<_TYPE, ROWS/16, COLS/16, _NPC1>& pyrA4,
                             xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrB0, xf::Mat<_TYPE, ROWS/2, COLS/2, _NPC1>& pyrB1, xf::Mat<_TYPE, ROWS/4, COLS/4, _NPC1>& pyrB2, xf::Mat<_TYPE, ROWS/8, COLS/8, _NPC1>& pyrB3, xf::Mat<_TYPE, ROWS/16, COLS/16, _NPC1>& pyrB4,
                             xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrS0, xf::Mat<_TYPE, ROWS/2, COLS/2, _NPC1>& pyrS1, xf::Mat<_TYPE, ROWS/4, COLS/4, _NPC1>& pyrS2, xf::Mat<_TYPE, ROWS/8, COLS/8, _NPC1>& pyrS3, xf::Mat<_TYPE, ROWS/16, COLS/16, _NPC1>& pyrS4,
+							xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp0, xf::Mat<_TYPE, ROWS/2, COLS/2, _NPC1>& temp1, xf::Mat<_TYPE, ROWS/4, COLS/4, _NPC1>& temp2, xf::Mat<_TYPE, ROWS/8, COLS/8, _NPC1>& temp3, xf::Mat<_TYPE, ROWS/16, COLS/16, _NPC1>& temp4,
                             xf::Mat<_TYPE, ROWS, COLS, _NPC1>& dst) {
 
     // 拉普拉斯金字塔各层分别融合 0 1 2 3 4
@@ -178,21 +178,17 @@ void blendLaplacianPyramids(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrA0, xf::Mat<_T
     blendLaplacianPyramidsByRE2<ROWS/16, COLS/16>(pyrA4, pyrB4, pyrS4);
 
     // 输出图像 4 3 2 1
-    xf::Mat<_TYPE, ROWS/8, COLS/8, _NPC1> expend4(pyrS3.rows, pyrS3.cols);// upscale 2x
-    xf::pyrUp<_TYPE, ROWS/16, COLS/16,  _NPC1>(pyrS4, expend4);
-    xf::add<XF_CONVERT_POLICY_SATURATE, _TYPE, ROWS/8, COLS/8, _NPC1>(pyrS3, expend4, pyrS3);
+    xf::pyrUp<_TYPE, ROWS/16, COLS/16,  _NPC1>(pyrS4, temp3);
+    xf::add<XF_CONVERT_POLICY_SATURATE, _TYPE, ROWS/8, COLS/8, _NPC1>(pyrS3, temp3, pyrS3);
 
-    xf::Mat<_TYPE, ROWS/4, COLS/4, _NPC1> expend3(pyrS2.rows, pyrS2.cols);// upscale 2x
-    xf::pyrUp<_TYPE, ROWS/8, COLS/8,  _NPC1>(pyrS3, expend3);
-    xf::add<XF_CONVERT_POLICY_SATURATE, _TYPE, ROWS/4, COLS/4, _NPC1>(pyrS2, expend3, pyrS2);
+    xf::pyrUp<_TYPE, ROWS/8, COLS/8,  _NPC1>(pyrS3, temp2);
+    xf::add<XF_CONVERT_POLICY_SATURATE, _TYPE, ROWS/4, COLS/4, _NPC1>(pyrS2, temp2, pyrS2);
 
-    xf::Mat<_TYPE, ROWS/2, COLS/2, _NPC1> expend2(pyrS1.rows, pyrS1.cols);// upscale 2x
-    xf::pyrUp<_TYPE, ROWS/4, COLS/4,  _NPC1>(pyrS2, expend2);
-    xf::add<XF_CONVERT_POLICY_SATURATE, _TYPE, ROWS/2, COLS/2, _NPC1>(pyrS1, expend2, pyrS1);
+    xf::pyrUp<_TYPE, ROWS/4, COLS/4,  _NPC1>(pyrS2, temp1);
+    xf::add<XF_CONVERT_POLICY_SATURATE, _TYPE, ROWS/2, COLS/2, _NPC1>(pyrS1, temp1, pyrS1);
 
-    xf::Mat<_TYPE, ROWS, COLS, _NPC1> expend1(pyrS0.rows, pyrS0.cols);// upscale 2x
-    xf::pyrUp<_TYPE, ROWS/2, COLS/2,  _NPC1>(pyrS1, expend1);
-    xf::add<XF_CONVERT_POLICY_SATURATE, _TYPE, ROWS, COLS, _NPC1>(pyrS0, expend1, pyrS0);
+    xf::pyrUp<_TYPE, ROWS/2, COLS/2,  _NPC1>(pyrS1, temp0);
+    xf::add<XF_CONVERT_POLICY_SATURATE, _TYPE, ROWS, COLS, _NPC1>(pyrS0, temp0, pyrS0);
 
     // 调整亮度
     restoreBrightness<ROWS, COLS>(pyrS0, dst);

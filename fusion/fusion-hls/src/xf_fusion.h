@@ -19,8 +19,9 @@
 #define NO  1 // Normal Operation (1-pixel implementation)
 
 /* config width and height */
-#define WIDTH 	960
-#define HEIGHT	960
+#define WIDTH 	160
+#define HEIGHT	160
+#define SIZE 160*160
 
 /*  define the input and output types  */
 #if NO
