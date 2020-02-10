@@ -45,7 +45,7 @@ void pyrDownUpDown(
 		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src,
 		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& dst,
 		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp) {
-	xf::pyrDown<_TYPE, ROWS, COLS,  _NPC1, true>(src, temp);
+	xf::pyrDown<_TYPE, ROWS, COLS, _NPC1, true>(src, temp);
 	int width = dst.cols;
 	int height = dst.rows;
 	for (int i = 0; i < height; i++) {
