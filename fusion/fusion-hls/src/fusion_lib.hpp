@@ -8,7 +8,8 @@ namespace fusion {
 // 重新调整图片亮度
 template<int ROWS, int COLS>
 void restoreBrightness(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& dst) {
-    // 归一化
+#pragma HLS INLINE OFF
+	// 归一化
     // 分通道分别计算均值，均方差
     double means = 0.0;
     double sds = 0.0;
@@ -26,7 +27,10 @@ void restoreBrightness(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src, xf::Mat<_TYPE, RO
     int width = dst.cols;
     int height = dst.rows;
     for (int i = 0; i < height; i++) {
+#pragma HLS LOOP_TRIPCOUNT min=1 max=ROWS
         for(int j = 0; j < width; j++) {
+#pragma HLS LOOP_TRIPCOUNT min=1 max=COLS
+#pragma HLS PIPELINE
             double value = (src.data[i*width+j] - mins) * 255 / (maxs - mins);
 
             if ( value > 255) {
@@ -41,16 +45,20 @@ void restoreBrightness(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src, xf::Mat<_TYPE, RO
 }
 
 template<int ROWS, int COLS>
-void pyrDownUpDown(
+void dstCopyFromSrc(
 		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src,
-		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& dst,
-		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp) {
-	xf::pyrDown<_TYPE, ROWS, COLS, _NPC1, true>(src, temp);
+		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& dst
+		) {
+#pragma HLS INLINE OFF
+#pragma HLS DATAFLOW
 	int width = dst.cols;
 	int height = dst.rows;
 	for (int i = 0; i < height; i++) {
+#pragma HLS LOOP_TRIPCOUNT min=1 max=ROWS
 		for(int j = 0; j < width; j++) {
-			dst.write(i*width+j, temp.data[i*width+j]);
+#pragma HLS LOOP_TRIPCOUNT min=1 max=COLS
+#pragma HLS PIPELINE
+			dst.write(i*width+j, src.data[i*width+j]);
 		}
 	}
 }
@@ -63,40 +71,59 @@ void buildLaplacianPyramids(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src,
 		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp0Scale1, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp1Scale1, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp2Scale1, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp3Scale1, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp4Scale1,
 		xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& temp0Scale2, xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& temp1Scale2, xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& temp2Scale2, xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& temp3Scale2, xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& temp4Scale2
 ) {
-    pyr0.copyTo(src.data);
+#pragma HLS INLINE OFF
+    fusion::dstCopyFromSrc<ROWS, COLS>(src, pyr0);
 
     // 往下构造本层高斯金字塔 第1层
-    fusion::pyrDownUpDown<ROWS, COLS>(pyr0, pyr1, temp0Scale1);
+    xf::pyrDown<_TYPE, ROWS, COLS, _NPC1, true>(pyr0, temp0Scale1);
+    fusion::dstCopyFromSrc<ROWS, COLS>(temp0Scale1, pyr1);
     // 往下构造本层高斯金字塔 第2层
-    fusion::pyrDownUpDown<ROWS, COLS>(pyr1, pyr2, temp1Scale1);
+    xf::pyrDown<_TYPE, ROWS, COLS, _NPC1, true>(pyr1, temp1Scale1);
+    fusion::dstCopyFromSrc<ROWS, COLS>(temp1Scale1, pyr2);
     // 往下构造本层高斯金字塔 第3层
-    fusion::pyrDownUpDown<ROWS, COLS>(pyr2, pyr3, temp2Scale1);
+    xf::pyrDown<_TYPE, ROWS, COLS, _NPC1, true>(pyr2, temp2Scale1);
+    fusion::dstCopyFromSrc<ROWS, COLS>(temp2Scale1, pyr3);
     // 往下构造本层高斯金字塔 第4层
-    fusion::pyrDownUpDown<ROWS, COLS>(pyr3, pyr4, temp3Scale1);
+    xf::pyrDown<_TYPE, ROWS, COLS, _NPC1, true>(pyr3, temp3Scale1);
+    fusion::dstCopyFromSrc<ROWS, COLS>(temp3Scale1, pyr4);
 
     // 上一层高斯金字塔减去本层高斯金字塔*2得到上一层拉普拉斯金字塔；pyr[0~N]构成了拉普拉斯金字塔；第N层（最后一层）拉普拉斯金字塔同高斯金字塔
     // 第1层
     xf::pyrUp<_TYPE, ROWS, COLS,  _NPC1>(pyr1, temp0Scale2);
+{
+#pragma HLS latency min=1 max=1
     xf::absdiff<_TYPE, ROWS, COLS, _NPC1>(pyr0, temp0Scale1, pyr0);
+}
 
     // 第2层
     xf::pyrUp<_TYPE, ROWS, COLS,  _NPC1>(pyr2, temp1Scale2);
-    xf::absdiff<_TYPE, ROWS, COLS, _NPC1>(pyr1, temp1Scale1, pyr1);
+	{
+		#pragma HLS latency min=1 max=1
+		xf::absdiff<_TYPE, ROWS, COLS, _NPC1>(pyr1, temp1Scale1, pyr1);
+	}
 
     // 第3层
     xf::pyrUp<_TYPE, ROWS, COLS,  _NPC1>(pyr3, temp2Scale2);
-    xf::absdiff<_TYPE, ROWS, COLS, _NPC1>(pyr2, temp2Scale1, pyr2);
+	{
+		#pragma HLS latency min=1 max=1
+		xf::absdiff<_TYPE, ROWS, COLS, _NPC1>(pyr2, temp2Scale1, pyr2);
+	}
 
     // 第4层
     xf::pyrUp<_TYPE, ROWS, COLS,  _NPC1>(pyr4, temp3Scale2);
-    xf::absdiff<_TYPE, ROWS, COLS, _NPC1>(pyr3, temp3Scale1, pyr3);
+	{
+	#pragma HLS latency min=1 max=1
+		xf::absdiff<_TYPE, ROWS, COLS, _NPC1>(pyr3, temp3Scale1, pyr3);
+	}
 }
 
 
 // 融合策略为区域能量
 template<int ROWS, int COLS>
 void blendLaplacianPyramidsByRE2(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageA, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageB, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageS) {
-    // 均值滤波
+#pragma HLS INLINE OFF
+#pragma HLS DATAFLOW
+	// 均值滤波
     static double G[3][3] = {
         {0.1111, 0.1111, 0.1111},
         {0.1111, 0.1111, 0.1111},
@@ -108,7 +135,10 @@ void blendLaplacianPyramidsByRE2(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageA, xf::
     int width = imageB.cols;
 
     for (int i = 0; i < height; i++) {
+#pragma HLS LOOP_TRIPCOUNT min=1 max=ROWS
         for (int j = 0; j < width; j++) {
+#pragma HLS LOOP_TRIPCOUNT min=1 max=COLS
+#pragma HLS PIPELINE
 
             // 不检查边界
             if ((i > 1) && (i < (height - 2)) && (j > 1) && (j < (width - 2))) {
@@ -116,7 +146,9 @@ void blendLaplacianPyramidsByRE2(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageA, xf::
                 static double deltaA = 0.0;
                 static double deltaB = 0.0;
                 static double matchDegree = 0.0;
+#pragma HLS LOOP_TRIPCOUNT min=1 max=3
                 for (int rowOffset = -1; rowOffset <= 1; rowOffset++) {
+#pragma HLS LOOP_TRIPCOUNT min=1 max=3
                     for (int colOffset= -1; colOffset <= 1; colOffset++) {
                         // 单通道
                         int x = i + rowOffset;
@@ -159,7 +191,7 @@ void blendLaplacianPyramids(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrA0, xf::Mat<_T
 							xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp0Scale1, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp1Scale1, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp2Scale1, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp3Scale1, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp4Scale1,
 							xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& temp0Scale2, xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& temp1Scale2, xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& temp2Scale2, xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& temp3Scale2, xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& temp4Scale2,
                             xf::Mat<_TYPE, ROWS, COLS, _NPC1>& dst) {
-
+#pragma HLS INLINE OFF
     // 拉普拉斯金字塔各层分别融合 0 1 2 3 4
     blendLaplacianPyramidsByRE2<ROWS, COLS>(pyrA0, pyrB0, pyrS0);
     blendLaplacianPyramidsByRE2<ROWS, COLS>(pyrA1, pyrB1, pyrS1);

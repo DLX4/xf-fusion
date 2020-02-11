@@ -41,6 +41,8 @@ void blend(
 		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& srcB,
 		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& dst
 		) {
+#pragma HLS INLINE OFF
+
 	int height0 = srcA.rows;
 	int width0 = srcA.cols;
 	int height1 = height0 / 2;
@@ -52,7 +54,6 @@ void blend(
 	int height4 = height3 / 2;
 	int width4 = width3 / 2;
 
-#define DLX_MAT_HACK
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrA0(1, 1, (void *)pyrA0Data);pyrA0.allocatedFlag = 3; pyrA0.rows = height0; pyrA0.cols = width0; pyrA0.size = height0 * width0;
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrA1(1, 1, (void *)pyrA1Data);pyrA1.allocatedFlag = 3; pyrA1.rows = height1; pyrA1.cols = width1; pyrA1.size = height1 * width1;
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrA2(1, 1, (void *)pyrA2Data);pyrA2.allocatedFlag = 3; pyrA2.rows = height2; pyrA2.cols = width2; pyrA2.size = height2 * width2;
@@ -109,7 +110,6 @@ void blend(
 	xf::Mat<_TYPE, HEIGHT*2, WIDTH*2, _NPC1> pyrS2TempScale2(1, 1, (void *)tempS2Data); pyrS2TempScale2.allocatedFlag = 3; pyrS2TempScale2.rows = height2; pyrS2TempScale2.cols = width2; pyrS2TempScale2.size = height2 * width2;
 	xf::Mat<_TYPE, HEIGHT*2, WIDTH*2, _NPC1> pyrS3TempScale2(1, 1, (void *)tempS3Data); pyrS3TempScale2.allocatedFlag = 3; pyrS3TempScale2.rows = height3; pyrS3TempScale2.cols = width3; pyrS3TempScale2.size = height3 * width3;
 	xf::Mat<_TYPE, HEIGHT*2, WIDTH*2, _NPC1> pyrS4TempScale2(1, 1, (void *)tempS4Data); pyrS4TempScale2.allocatedFlag = 3; pyrS4TempScale2.rows = height4; pyrS4TempScale2.cols = width4; pyrS4TempScale2.size = height4 * width4;
-#undef DLX_MAT_HACK
 
 	// 图像A 拉普拉斯金字塔
 	fusion::buildLaplacianPyramids<HEIGHT, WIDTH>(

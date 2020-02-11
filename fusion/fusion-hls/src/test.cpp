@@ -176,7 +176,9 @@ void testBuildLaplacianPyramids() {
 	pyrA0.copyTo(srcA.data);
 
 	// 往下构造本层高斯金字塔 第1层
-	fusion::pyrDownUpDown<HEIGHT, WIDTH>(pyrA0, pyrA1, pyrA0TempScale1);
+	// fusion::pyrDownUpDown<HEIGHT, WIDTH>(pyrA0, pyrA1, pyrA0TempScale1);
+	xf::pyrDown<_TYPE, HEIGHT, WIDTH, _NPC1, true>(pyrA0, pyrA0TempScale1);
+	fusion::dstCopyFromSrc<HEIGHT, WIDTH>(pyrA0TempScale1, pyrA1);
 	xf::imwrite("pyrA0TempScale1_0.jpg", pyrA0TempScale1);
 
 	xf::pyrUp<_TYPE, HEIGHT, WIDTH,  _NPC1>(pyrA1, pyrA0TempScale2);
