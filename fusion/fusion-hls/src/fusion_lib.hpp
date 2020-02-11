@@ -31,7 +31,7 @@ void restoreBrightness(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src, xf::Mat<_TYPE, RO
     int height = dst.rows;
     for (int i = 0; i < height; i++) {
 #pragma HLS LOOP_TRIPCOUNT min=1 max=ROWS
-
+#pragma HLS UNROLL
         for(int j = 0; j < width; j++) {
 #pragma HLS LOOP_TRIPCOUNT min=1 max=COLS
 #pragma HLS PIPELINE
@@ -59,6 +59,7 @@ void dstCopyFromSrc(
 	int height = dst.rows;
 	for (int i = 0; i < height; i++) {
 #pragma HLS LOOP_TRIPCOUNT min=1 max=ROWS
+#pragma HLS UNROLL
 		for(int j = 0; j < width; j++) {
 #pragma HLS LOOP_TRIPCOUNT min=1 max=COLS
 #pragma HLS PIPELINE
@@ -150,10 +151,12 @@ void blendLaplacianPyramidsByRE2(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageA, xf::
                 static double deltaA = 0.0;
                 static double deltaB = 0.0;
                 static double matchDegree = 0.0;
-#pragma HLS LOOP_TRIPCOUNT min=1 max=3
+
                 for (int rowOffset = -1; rowOffset <= 1; rowOffset++) {
 #pragma HLS LOOP_TRIPCOUNT min=1 max=3
+#pragma HLS UNROLL
                     for (int colOffset= -1; colOffset <= 1; colOffset++) {
+#pragma HLS LOOP_TRIPCOUNT min=1 max=3
                         // µ¥Í¨µÀ
                         int x = i + rowOffset;
                         int y = j + colOffset;
