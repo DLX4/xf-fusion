@@ -5,33 +5,37 @@
 
 namespace fusion {
 
+// 平均值标准差包装
+template<int ROWS, int COLS>
+void meanStdDevWrapper(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src, double& min, double& max) {
+#pragma HLS INLINE OFF
+#pragma HLS DATAFLOW
+	unsigned short tmpMean[1];
+	unsigned short tmpSd[1];
+	xf::meanStdDev<_TYPE, ROWS, COLS, _NPC1>(src, tmpMean, tmpSd);
+	double means = (float)tmpMean[0]/256;
+	double sds = (float)tmpSd[0]/256;
+	min = means - DYNAMIC * sds;
+	max = means + DYNAMIC * sds;
+}
+
 // 重新调整图片亮度
 template<int ROWS, int COLS>
-void restoreBrightness(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& dst) {
+void restoreBrightness(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& dst, double min, double max) {
 #pragma HLS INLINE OFF
+#pragma HLS DATAFLOW
 	// 归一化
     // 分通道分别计算均值，均方差
-    double means = 0.0;
-    double sds = 0.0;
-    double mins = 0.0;
-    double maxs = 0.0;
-
-    unsigned short tmpMean[1];
-    unsigned short tmpSd[1];
-    xf::meanStdDev<_TYPE, ROWS, COLS, _NPC1>(src, tmpMean, tmpSd);
-    means = (float)tmpMean[0]/256;
-    sds = (float)tmpSd[0]/256;
-    mins = means - DYNAMIC * sds;
-    maxs = means + DYNAMIC * sds;
 
     int width = dst.cols;
     int height = dst.rows;
     for (int i = 0; i < height; i++) {
 #pragma HLS LOOP_TRIPCOUNT min=1 max=ROWS
+
         for(int j = 0; j < width; j++) {
 #pragma HLS LOOP_TRIPCOUNT min=1 max=COLS
 #pragma HLS PIPELINE
-            double value = (src.data[i*width+j] - mins) * 255 / (maxs - mins);
+            double value = (src.data[i*width+j] - min) * 255 / (max - min);
 
             if ( value > 255) {
             	dst.write(i*width+j, 255);
@@ -90,10 +94,10 @@ void buildLaplacianPyramids(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src,
     // 上一层高斯金字塔减去本层高斯金字塔*2得到上一层拉普拉斯金字塔；pyr[0~N]构成了拉普拉斯金字塔；第N层（最后一层）拉普拉斯金字塔同高斯金字塔
     // 第1层
     xf::pyrUp<_TYPE, ROWS, COLS,  _NPC1>(pyr1, temp0Scale2);
-{
-#pragma HLS latency min=1 max=1
-    xf::absdiff<_TYPE, ROWS, COLS, _NPC1>(pyr0, temp0Scale1, pyr0);
-}
+	{
+	#pragma HLS latency min=1 max=1
+		xf::absdiff<_TYPE, ROWS, COLS, _NPC1>(pyr0, temp0Scale1, pyr0);
+	}
 
     // 第2层
     xf::pyrUp<_TYPE, ROWS, COLS,  _NPC1>(pyr2, temp1Scale2);
@@ -213,7 +217,10 @@ void blendLaplacianPyramids(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrA0, xf::Mat<_T
     xf::add<XF_CONVERT_POLICY_SATURATE, _TYPE, ROWS, COLS, _NPC1>(pyrS0, temp0Scale1, pyrS0);
 
     // 调整亮度
-    restoreBrightness<ROWS, COLS>(pyrS0, dst);
+    double min = 0.0;
+    double max = 0.0;
+    fusion::meanStdDevWrapper(pyrS0, min, max);
+    fusion::restoreBrightness<ROWS, COLS>(pyrS0, dst, min, max);
 }
 }
 #endif
