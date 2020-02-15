@@ -20,42 +20,27 @@ void blend(
 
 	// buffer scale 1
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> tempScale1(height0, width0);
-#pragma HLS ARRAY_PARTITION variable=tempScale1.data complete dim=1
+
 	// buffer scale 2
 	xf::Mat<_TYPE, HEIGHT*2, WIDTH*2, _NPC1> tempScale2(height0*2, width0*2);
 
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrA0(height0, width0);
-#pragma HLS ARRAY_PARTITION variable=pyrA0.data complete dim=1
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrA1(height1, width1);
-#pragma HLS ARRAY_PARTITION variable=pyrA1.data complete dim=1
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrA2(height2, width2);
-#pragma HLS ARRAY_PARTITION variable=pyrA2.data complete dim=1
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrA3(height3, width3);
-#pragma HLS ARRAY_PARTITION variable=pyrA3.data complete dim=1
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrA4(height4, width4);
-#pragma HLS ARRAY_PARTITION variable=pyrA4.data complete dim=1
 
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrB0(height0, width0);
-#pragma HLS ARRAY_PARTITION variable=pyrB0.data complete dim=1
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrB1(height1, width1);
-#pragma HLS ARRAY_PARTITION variable=pyrB1.data complete dim=1
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrB2(height2, width2);
-#pragma HLS ARRAY_PARTITION variable=pyrB2.data complete dim=1
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrB3(height3, width3);
-#pragma HLS ARRAY_PARTITION variable=pyrB3.data complete dim=1
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrB4(height4, width4);
-#pragma HLS ARRAY_PARTITION variable=pyrB4.data complete dim=1
 
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrS0(height0, width0);
-#pragma HLS ARRAY_PARTITION variable=pyrS0.data complete dim=1
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrS1(height1, width1);
-#pragma HLS ARRAY_PARTITION variable=pyrS1.data complete dim=1
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrS2(height2, width2);
-#pragma HLS ARRAY_PARTITION variable=pyrS2.data complete dim=1
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrS3(height3, width3);
-#pragma HLS ARRAY_PARTITION variable=pyrS3.data complete dim=1
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrS4(height4, width4);
-#pragma HLS ARRAY_PARTITION variable=pyrS4.data complete dim=1
 
 	tempScale1.allocatedFlag = 3; tempScale1.rows = height0; tempScale1.cols = width0; tempScale1.size = height0 * width0;
 	tempScale2.allocatedFlag = 3; tempScale2.rows = height0*2; tempScale2.cols = width0*2; tempScale2.size = height0 * width0 * 4;
@@ -104,10 +89,15 @@ void blend(
 	fusion::lapPyrUpSubLevel<HEIGHT, WIDTH>(pyrB4, pyrB3, tempScale1, tempScale2, pyrB3);
 
 	// 拉普拉斯金字塔各层分别融合 0 1 2 3 4
+	fusion::blendLaplacianPyramidsBorder<HEIGHT, WIDTH>(pyrA0, pyrB0, pyrS0);
 	fusion::blendLaplacianPyramidsByRE2<HEIGHT, WIDTH>(pyrA0, pyrB0, pyrS0);
+	fusion::blendLaplacianPyramidsBorder<HEIGHT, WIDTH>(pyrA1, pyrB1, pyrS1);
 	fusion::blendLaplacianPyramidsByRE2<HEIGHT, WIDTH>(pyrA1, pyrB1, pyrS1);
+	fusion::blendLaplacianPyramidsBorder<HEIGHT, WIDTH>(pyrA2, pyrB2, pyrS2);
 	fusion::blendLaplacianPyramidsByRE2<HEIGHT, WIDTH>(pyrA2, pyrB2, pyrS2);
+	fusion::blendLaplacianPyramidsBorder<HEIGHT, WIDTH>(pyrA3, pyrB3, pyrS3);
 	fusion::blendLaplacianPyramidsByRE2<HEIGHT, WIDTH>(pyrA3, pyrB3, pyrS3);
+	fusion::blendLaplacianPyramidsBorder<HEIGHT, WIDTH>(pyrA4, pyrB4, pyrS4);
 	fusion::blendLaplacianPyramidsByRE2<HEIGHT, WIDTH>(pyrA4, pyrB4, pyrS4);
 
 	// 重建 从小到大

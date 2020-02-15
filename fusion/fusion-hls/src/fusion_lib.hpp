@@ -8,7 +8,6 @@ namespace fusion {
 // 平均值标准差包装
 template<int ROWS, int COLS>
 void meanStdDevWrapper(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src, double& min, double& max) {
-#pragma HLS INLINE OFF
 #pragma HLS DATAFLOW
 	unsigned short tmpMean[1];
 	unsigned short tmpSd[1];
@@ -22,7 +21,6 @@ void meanStdDevWrapper(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src, double& min, doub
 // 重新调整图片亮度
 template<int ROWS, int COLS>
 void restoreBrightness(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& dst, double min, double max) {
-#pragma HLS INLINE OFF
 	// 归一化
     // 分通道分别计算均值，均方差
 
@@ -52,9 +50,9 @@ void dstCopyFromSrc(
 		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src,
 		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& dst
 		) {
-#pragma HLS INLINE OFF
 	int width = dst.cols;
 	int height = dst.rows;
+
 	for (int i = 0; i < height; i++) {
 #pragma HLS LOOP_TRIPCOUNT min=1 max=ROWS
 #pragma HLS UNROLL
@@ -71,7 +69,6 @@ void scaleDown(
 		xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& src,
 		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& dst
 		) {
-#pragma HLS INLINE OFF
 	int width = dst.cols;
 	int height = dst.rows;
 	for (int i = 0; i < height; i++) {
@@ -107,11 +104,56 @@ void lapPyrUpSubLevel(
 
 // 融合策略为区域能量
 template<int ROWS, int COLS>
+void blendLaplacianPyramidsBorder(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageA, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageB, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageS) {
+    int height = imageA.rows;
+    int width = imageB.cols;
+
+    for (int i = 0; i <= 1; i++) {
+#pragma HLS LOOP_TRIPCOUNT min=2 max=2
+		for (int j = 0; j < width; j++) {
+#pragma HLS LOOP_TRIPCOUNT min=1 max=COLS
+#pragma HLS PIPELINE
+			// 边界55开填充
+			imageS.data[i*width+j] = 0.5 * imageA.data[i*width+j] + 0.5 * imageB.data[i*width+j];
+		}
+    }
+
+    for (int i = height-1; i >= height - 2; i--) {
+#pragma HLS LOOP_TRIPCOUNT min=2 max=2
+		for (int j = 0; j < width; j++) {
+#pragma HLS LOOP_TRIPCOUNT min=1 max=COLS
+#pragma HLS PIPELINE
+			// 边界55开填充
+			imageS.data[i*width+j] = 0.5 * imageA.data[i*width+j] + 0.5 * imageB.data[i*width+j];
+		}
+    }
+
+    for (int i = 0; i < height; i++) {
+#pragma HLS LOOP_TRIPCOUNT min=1 max=ROWS
+		for (int j = 0; j <= 1; j++) {
+#pragma HLS LOOP_TRIPCOUNT min=1 max=2
+#pragma HLS PIPELINE
+			// 边界55开填充
+			imageS.data[i*width+j] = 0.5 * imageA.data[i*width+j] + 0.5 * imageB.data[i*width+j];
+		}
+    }
+
+    for (int i = 0; i < height; i++) {
+#pragma HLS LOOP_TRIPCOUNT min=1 max=ROWS
+		for (int j = width-1; j <= width - 2; j--) {
+#pragma HLS LOOP_TRIPCOUNT min=1 max=2
+#pragma HLS PIPELINE
+			// 边界55开填充
+			imageS.data[i*width+j] = 0.5 * imageA.data[i*width+j] + 0.5 * imageB.data[i*width+j];
+		}
+    }
+
+}
+
+template<int ROWS, int COLS>
 void blendLaplacianPyramidsByRE2(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageA, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageB, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageS) {
-#pragma HLS INLINE OFF
-#pragma HLS DATAFLOW
 	// 均值滤波
-    static double G[3][3] = {
+    double G[3][3] = {
         {0.1111, 0.1111, 0.1111},
         {0.1111, 0.1111, 0.1111},
         {0.1111, 0.1111, 0.1111}
@@ -121,52 +163,51 @@ void blendLaplacianPyramidsByRE2(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageA, xf::
     int height = imageA.rows;
     int width = imageB.cols;
 
-    for (int i = 0; i < height; i++) {
+    for (int i = 2; i < height - 2; i++) {
 #pragma HLS LOOP_TRIPCOUNT min=1 max=ROWS
-        for (int j = 0; j < width; j++) {
+        for (int j = 2; j < width - 2; j++) {
 #pragma HLS LOOP_TRIPCOUNT min=1 max=COLS
 #pragma HLS PIPELINE
+        	// 3*3
+			double deltaA = 0.0;
+			double deltaB = 0.0;
+			double matchDegree = 0.0;
 
-            // 不检查边界
-            if ((i > 1) && (i < (height - 2)) && (j > 1) && (j < (width - 2))) {
-                // 3*3
-                static double deltaA = 0.0;
-                static double deltaB = 0.0;
-                static double matchDegree = 0.0;
-
-                for (int rowOffset = -1; rowOffset <= 1; rowOffset++) {
+			for (int rowOffset = -1; rowOffset <= 1; rowOffset++) {
 #pragma HLS LOOP_TRIPCOUNT min=1 max=3
 #pragma HLS UNROLL
-                    for (int colOffset= -1; colOffset <= 1; colOffset++) {
+				for (int colOffset= -1; colOffset <= 1; colOffset++) {
 #pragma HLS LOOP_TRIPCOUNT min=1 max=3
-                        // 单通道
-                        int x = i + rowOffset;
-                        int y = j + colOffset;
+					// 单通道
+					int x = i + rowOffset;
+					int y = j + colOffset;
+					int index = (int)x*width+y;
 
-                        deltaA += G[1+rowOffset][1+colOffset] * imageA.data[x*width+y] * imageA.data[x*width+y];
-                        deltaB += G[1+rowOffset][1+colOffset] * imageB.data[x*width+y] * imageB.data[x*width+y];
-                        matchDegree += G[1+rowOffset][1+colOffset] * imageA.data[x*width+y] * imageB.data[x*width+y];
-                    }
-                }
-                // 计算匹配度
-                matchDegree = matchDegree * matchDegree / (deltaA * deltaB);
+					deltaA += G[1+rowOffset][1+colOffset] * imageA.data[index] * imageA.data[index];
+					deltaB += G[1+rowOffset][1+colOffset] * imageB.data[index] * imageB.data[index];
+					matchDegree += G[1+rowOffset][1+colOffset] * imageA.data[index] * imageB.data[index];
+				}
+			}
+			// 计算匹配度
+			matchDegree = matchDegree * matchDegree / (deltaA * deltaB);
 
-                if (hls::isnan(matchDegree) || matchDegree < matchDegreeLimit) {
-                    if (deltaA == deltaB) {
-                        imageS.write(i*width+j, 0.5 * imageA.data[i*width+j] + 0.5 * imageB.data[i*width+j]);
-                    } else if (deltaA > deltaB) {
-                        imageS.write(i*width+j, imageA.data[i*width+j]);
-                    } else {
-                        imageS.write(i*width+j, imageB.data[i*width+j]);
-                    }
-                } else {
-                    double wMin = 0.5 * (1 - (1 - matchDegree)/(1 - matchDegreeLimit));
-                    imageS.write(i*width+j, hls::min(imageA.data[i*width+j], imageB.data[i*width+j]) * wMin + hls::max(imageA.data[i*width+j], imageB.data[i*width+j]) * (1 - wMin));
-                }
-            } else {
-                // 边界55开填充
-                imageS.write(i*width+j, 0.5 * imageA.data[i*width+j] + 0.5 * imageB.data[i*width+j]);
-            }
+			int pix = (int)i*width+j;
+			if (hls::isnan(matchDegree) || matchDegree < matchDegreeLimit) {
+				if (deltaA == deltaB) {
+					imageS.data[pix] = 0.5 * imageA.data[pix] + 0.5 * imageB.data[pix];
+				} else if (deltaA > deltaB) {
+					imageS.data[pix] = imageA.data[pix];
+				} else {
+					imageS.data[pix] = imageB.data[pix];
+				}
+			} else {
+				double wMin = 0.5 * (1 - (1 - matchDegree)/(1 - matchDegreeLimit));
+
+				int min = hls::min<int>(imageA.data[pix], imageB.data[pix]);
+				int max = hls::max<int>(imageA.data[pix], imageB.data[pix]);
+				double value = min * wMin + max * (1 - wMin);
+				imageS.data[pix] = (int)value;
+			}
         }
     }
 }
