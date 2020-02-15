@@ -23,7 +23,6 @@ void meanStdDevWrapper(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src, double& min, doub
 template<int ROWS, int COLS>
 void restoreBrightness(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& dst, double min, double max) {
 #pragma HLS INLINE OFF
-#pragma HLS DATAFLOW
 	// 归一化
     // 分通道分别计算均值，均方差
 
@@ -54,7 +53,6 @@ void dstCopyFromSrc(
 		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& dst
 		) {
 #pragma HLS INLINE OFF
-#pragma HLS DATAFLOW
 	int width = dst.cols;
 	int height = dst.rows;
 	for (int i = 0; i < height; i++) {
@@ -68,60 +66,44 @@ void dstCopyFromSrc(
 	}
 }
 
-
-// 通过源图像构造拉普拉斯金字塔 (注意：图像的长宽需要被16整除)
 template<int ROWS, int COLS>
-void buildLaplacianPyramids(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& src,
-		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyr0, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyr1, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyr2, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyr3, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyr4,
-		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp0Scale1, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp1Scale1, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp2Scale1, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp3Scale1, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp4Scale1,
-		xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& temp0Scale2, xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& temp1Scale2, xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& temp2Scale2, xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& temp3Scale2, xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& temp4Scale2
-) {
+void scaleDown(
+		xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& src,
+		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& dst
+		) {
 #pragma HLS INLINE OFF
-    fusion::dstCopyFromSrc<ROWS, COLS>(src, pyr0);
-
-    // 往下构造本层高斯金字塔 第1层
-    xf::pyrDown<_TYPE, ROWS, COLS, _NPC1, true>(pyr0, temp0Scale1);
-    fusion::dstCopyFromSrc<ROWS, COLS>(temp0Scale1, pyr1);
-    // 往下构造本层高斯金字塔 第2层
-    xf::pyrDown<_TYPE, ROWS, COLS, _NPC1, true>(pyr1, temp1Scale1);
-    fusion::dstCopyFromSrc<ROWS, COLS>(temp1Scale1, pyr2);
-    // 往下构造本层高斯金字塔 第3层
-    xf::pyrDown<_TYPE, ROWS, COLS, _NPC1, true>(pyr2, temp2Scale1);
-    fusion::dstCopyFromSrc<ROWS, COLS>(temp2Scale1, pyr3);
-    // 往下构造本层高斯金字塔 第4层
-    xf::pyrDown<_TYPE, ROWS, COLS, _NPC1, true>(pyr3, temp3Scale1);
-    fusion::dstCopyFromSrc<ROWS, COLS>(temp3Scale1, pyr4);
-
-    // 上一层高斯金字塔减去本层高斯金字塔*2得到上一层拉普拉斯金字塔；pyr[0~N]构成了拉普拉斯金字塔；第N层（最后一层）拉普拉斯金字塔同高斯金字塔
-    // 第1层
-    xf::pyrUp<_TYPE, ROWS, COLS,  _NPC1>(pyr1, temp0Scale2);
-	{
-	#pragma HLS latency min=1 max=1
-		xf::absdiff<_TYPE, ROWS, COLS, _NPC1>(pyr0, temp0Scale1, pyr0);
-	}
-
-    // 第2层
-    xf::pyrUp<_TYPE, ROWS, COLS,  _NPC1>(pyr2, temp1Scale2);
-	{
-		#pragma HLS latency min=1 max=1
-		xf::absdiff<_TYPE, ROWS, COLS, _NPC1>(pyr1, temp1Scale1, pyr1);
-	}
-
-    // 第3层
-    xf::pyrUp<_TYPE, ROWS, COLS,  _NPC1>(pyr3, temp2Scale2);
-	{
-		#pragma HLS latency min=1 max=1
-		xf::absdiff<_TYPE, ROWS, COLS, _NPC1>(pyr2, temp2Scale1, pyr2);
-	}
-
-    // 第4层
-    xf::pyrUp<_TYPE, ROWS, COLS,  _NPC1>(pyr4, temp3Scale2);
-	{
-	#pragma HLS latency min=1 max=1
-		xf::absdiff<_TYPE, ROWS, COLS, _NPC1>(pyr3, temp3Scale1, pyr3);
+	int width = dst.cols;
+	int height = dst.rows;
+	for (int i = 0; i < height; i++) {
+#pragma HLS LOOP_TRIPCOUNT min=1 max=ROWS
+#pragma HLS UNROLL
+		for(int j = 0; j < width; j++) {
+#pragma HLS LOOP_TRIPCOUNT min=1 max=COLS
+#pragma HLS PIPELINE
+			dst.write(i*width+j, src.data[i*width+j]);
+		}
 	}
 }
 
+// 通过源图像构造拉普拉斯金字塔
+template<int ROWS, int COLS>
+void lapPyrUpSubLevel(
+		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrX,
+		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrU,
+		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& tempScale1,
+		xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& tempScale2,
+		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& dstX
+) {
+	// 上一层高斯金字塔减去本层高斯金字塔*2得到上一层拉普拉斯金字塔；pyr[0~N]构成了拉普拉斯金字塔；第N层（最后一层）拉普拉斯金字塔同高斯金字塔
+	xf::pyrUp<_TYPE, ROWS, COLS,  _NPC1>(pyrX, tempScale2);
+	tempScale1.rows = pyrU.rows;
+	tempScale1.cols = pyrU.cols;
+	fusion::scaleDown(tempScale2, tempScale1);
+	{
+	#pragma HLS latency min=1 max=1
+		xf::absdiff<_TYPE, ROWS, COLS, _NPC1>(pyrU, tempScale1, dstX);
+	}
+}
 
 // 融合策略为区域能量
 template<int ROWS, int COLS>
@@ -189,41 +171,21 @@ void blendLaplacianPyramidsByRE2(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageA, xf::
     }
 }
 
-
-// 将两个原图像的拉普拉斯金字塔融合
+// 通过源图像构造拉普拉斯金字塔
 template<int ROWS, int COLS>
-void blendLaplacianPyramids(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrA0, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrA1, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrA2, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrA3, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrA4,
-                            xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrB0, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrB1, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrB2, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrB3, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrB4,
-                            xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrS0, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrS1, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrS2, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrS3, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrS4,
-							xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp0Scale1, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp1Scale1, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp2Scale1, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp3Scale1, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& temp4Scale1,
-							xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& temp0Scale2, xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& temp1Scale2, xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& temp2Scale2, xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& temp3Scale2, xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& temp4Scale2,
-                            xf::Mat<_TYPE, ROWS, COLS, _NPC1>& dst) {
-#pragma HLS INLINE OFF
-    // 拉普拉斯金字塔各层分别融合 0 1 2 3 4
-    blendLaplacianPyramidsByRE2<ROWS, COLS>(pyrA0, pyrB0, pyrS0);
-    blendLaplacianPyramidsByRE2<ROWS, COLS>(pyrA1, pyrB1, pyrS1);
-    blendLaplacianPyramidsByRE2<ROWS, COLS>(pyrA2, pyrB2, pyrS2);
-    blendLaplacianPyramidsByRE2<ROWS, COLS>(pyrA3, pyrB3, pyrS3);
-    blendLaplacianPyramidsByRE2<ROWS, COLS>(pyrA4, pyrB4, pyrS4);
-
-    // 输出图像 4 3 2 1
-    xf::pyrUp<_TYPE, ROWS, COLS,  _NPC1>(pyrS4, temp3Scale2);
-    xf::add<XF_CONVERT_POLICY_SATURATE, _TYPE, ROWS, COLS, _NPC1>(pyrS3, temp3Scale1, pyrS3);
-
-    xf::pyrUp<_TYPE, ROWS, COLS,  _NPC1>(pyrS3, temp2Scale2);
-    xf::add<XF_CONVERT_POLICY_SATURATE, _TYPE, ROWS, COLS, _NPC1>(pyrS2, temp2Scale1, pyrS2);
-
-    xf::pyrUp<_TYPE, ROWS, COLS,  _NPC1>(pyrS2, temp1Scale2);
-    xf::add<XF_CONVERT_POLICY_SATURATE, _TYPE, ROWS, COLS, _NPC1>(pyrS1, temp1Scale1, pyrS1);
-
-    xf::pyrUp<_TYPE, ROWS, COLS,  _NPC1>(pyrS1, temp0Scale2);
-    xf::add<XF_CONVERT_POLICY_SATURATE, _TYPE, ROWS, COLS, _NPC1>(pyrS0, temp0Scale1, pyrS0);
-
-    // 调整亮度
-    double min = 0.0;
-    double max = 0.0;
-    fusion::meanStdDevWrapper(pyrS0, min, max);
-    fusion::restoreBrightness<ROWS, COLS>(pyrS0, dst, min, max);
+void lapPyrUpAddLevel(
+		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrX,
+		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& pyrU,
+		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& tempScale1,
+		xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& tempScale2,
+		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& dstX
+) {
+	// 上一层高斯金字塔减去本层高斯金字塔*2得到上一层拉普拉斯金字塔；pyr[0~N]构成了拉普拉斯金字塔；第N层（最后一层）拉普拉斯金字塔同高斯金字塔
+	xf::pyrUp<_TYPE, ROWS, COLS,  _NPC1>(pyrX, tempScale2);
+	tempScale1.rows = pyrU.rows;
+	tempScale1.cols = pyrU.cols;
+	fusion::scaleDown(tempScale2, tempScale1);
+    xf::add<XF_CONVERT_POLICY_SATURATE, _TYPE, ROWS, COLS, _NPC1>(pyrU, tempScale1, dstX);
 }
 }
 #endif
