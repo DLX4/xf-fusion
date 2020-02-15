@@ -147,7 +147,6 @@ void blendLaplacianPyramidsBorder(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageA, xf:
 			imageS.data[i*width+j] = 0.5 * imageA.data[i*width+j] + 0.5 * imageB.data[i*width+j];
 		}
     }
-
 }
 
 template<int ROWS, int COLS>

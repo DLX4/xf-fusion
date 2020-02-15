@@ -62,33 +62,34 @@ void blend(
     pyrS2.allocatedFlag = 3; pyrS2.rows = height2; pyrS2.cols = width2; pyrS2.size = height2 * width2;
     pyrS3.allocatedFlag = 3; pyrS3.rows = height3; pyrS3.cols = width3; pyrS3.size = height3 * width3;
     pyrS4.allocatedFlag = 3; pyrS4.rows = height4; pyrS4.cols = width4; pyrS4.size = height4 * width4;
-	// 图像A
-	// 往下构造高斯金字塔
+
+	// 图像A构造高斯金字塔
 	fusion::dstCopyFromSrc<HEIGHT, WIDTH>(srcA, pyrA0);
 	xf::pyrDown<_TYPE, HEIGHT, WIDTH, _NPC1, true>(pyrA0, pyrA1);
 	xf::pyrDown<_TYPE, HEIGHT, WIDTH, _NPC1, true>(pyrA1, pyrA2);
 	xf::pyrDown<_TYPE, HEIGHT, WIDTH, _NPC1, true>(pyrA2, pyrA3);
 	xf::pyrDown<_TYPE, HEIGHT, WIDTH, _NPC1, true>(pyrA3, pyrA4);
 
-	// 拉普拉斯金字塔
+	// 图像A拉普拉斯金字塔
 	fusion::lapPyrUpSubLevel<HEIGHT, WIDTH>(pyrA1, pyrA0, tempScale1, tempScale2, pyrA0);
 	fusion::lapPyrUpSubLevel<HEIGHT, WIDTH>(pyrA2, pyrA1, tempScale1, tempScale2, pyrA1);
 	fusion::lapPyrUpSubLevel<HEIGHT, WIDTH>(pyrA3, pyrA2, tempScale1, tempScale2, pyrA2);
 	fusion::lapPyrUpSubLevel<HEIGHT, WIDTH>(pyrA4, pyrA3, tempScale1, tempScale2, pyrA3);
 
-	// 图像B 拉普拉斯金字塔
+	// 图像B构造高斯金字塔
 	fusion::dstCopyFromSrc<HEIGHT, WIDTH>(srcB, pyrB0);
 	xf::pyrDown<_TYPE, HEIGHT, WIDTH, _NPC1, true>(pyrB0, pyrB1);
 	xf::pyrDown<_TYPE, HEIGHT, WIDTH, _NPC1, true>(pyrB1, pyrB2);
 	xf::pyrDown<_TYPE, HEIGHT, WIDTH, _NPC1, true>(pyrB2, pyrB3);
 	xf::pyrDown<_TYPE, HEIGHT, WIDTH, _NPC1, true>(pyrB3, pyrB4);
 
+	// 图像B 拉普拉斯金字塔
 	fusion::lapPyrUpSubLevel<HEIGHT, WIDTH>(pyrB1, pyrB0, tempScale1, tempScale2, pyrB0);
 	fusion::lapPyrUpSubLevel<HEIGHT, WIDTH>(pyrB2, pyrB1, tempScale1, tempScale2, pyrB1);
 	fusion::lapPyrUpSubLevel<HEIGHT, WIDTH>(pyrB3, pyrB2, tempScale1, tempScale2, pyrB2);
 	fusion::lapPyrUpSubLevel<HEIGHT, WIDTH>(pyrB4, pyrB3, tempScale1, tempScale2, pyrB3);
 
-	// 拉普拉斯金字塔各层分别融合 0 1 2 3 4
+	// 分别融合图像AB各层拉普拉斯金字塔
 	fusion::blendLaplacianPyramidsBorder<HEIGHT, WIDTH>(pyrA0, pyrB0, pyrS0);
 	fusion::blendLaplacianPyramidsByRE2<HEIGHT, WIDTH>(pyrA0, pyrB0, pyrS0);
 	fusion::blendLaplacianPyramidsBorder<HEIGHT, WIDTH>(pyrA1, pyrB1, pyrS1);
@@ -100,7 +101,7 @@ void blend(
 	fusion::blendLaplacianPyramidsBorder<HEIGHT, WIDTH>(pyrA4, pyrB4, pyrS4);
 	fusion::blendLaplacianPyramidsByRE2<HEIGHT, WIDTH>(pyrA4, pyrB4, pyrS4);
 
-	// 重建 从小到大
+	// 累加拉普拉斯金字塔
 	fusion::lapPyrUpAddLevel<HEIGHT, WIDTH>(pyrS4, pyrS3, tempScale1, tempScale2, pyrS3);
 	fusion::lapPyrUpAddLevel<HEIGHT, WIDTH>(pyrS3, pyrS2, tempScale1, tempScale2, pyrS2);
 	fusion::lapPyrUpAddLevel<HEIGHT, WIDTH>(pyrS2, pyrS1, tempScale1, tempScale2, pyrS1);
