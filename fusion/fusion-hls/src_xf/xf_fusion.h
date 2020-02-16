@@ -32,14 +32,16 @@
 // Í¼ÏñÈÚºÏ¶¥²ãº¯Êý
 // void blend(xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& srcA, xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& srcB, xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& dst);
 void blend(
-		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrLA0,
-		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrLA1,
-		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrLA2,
-		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrLB0,
-		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrLB1,
-		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrLB2,
+		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrA0,
+		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrA1,
+		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrB0,
+		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrB1,
 		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrS0,
 		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrS1,
-		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrS2
-		) ;
+		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& dst,
+		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& tempScale1A,
+		xf::Mat<_TYPE, HEIGHT*2, WIDTH*2, _NPC1>& tempScale2A,
+		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& tempScale1B,
+		xf::Mat<_TYPE, HEIGHT*2, WIDTH*2, _NPC1>& tempScale2B
+		);
 #endif
