@@ -19,9 +19,9 @@
 #define NO  1 // Normal Operation (1-pixel implementation)
 
 /* config width and height */
-#define WIDTH 	160
-#define HEIGHT	160
-#define SIZE 160*160
+#define WIDTH 	640
+#define HEIGHT	480
+#define SIZE 640*480
 
 /*  define the input and output __TYPEs  */
 #define _NPC1 XF_NPPC1
@@ -30,6 +30,16 @@
 #define DYNAMIC 2
 
 // Í¼ÏñÈÚºÏ¶¥²ãº¯Êý
-void blend(xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& srcA, xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& srcB, xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& dst);
-
+// void blend(xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& srcA, xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& srcB, xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& dst);
+void blend(
+		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrLA0,
+		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrLA1,
+		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrLA2,
+		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrLB0,
+		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrLB1,
+		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrLB2,
+		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrS0,
+		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrS1,
+		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrS2
+		) ;
 #endif
