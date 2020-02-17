@@ -1,17 +1,10 @@
-
 #include <string>
 #include <math.h>
 #include <iostream>
 #include <fstream>
-#include "ap_int.h"
-
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/core/core.hpp"
-#include "opencv2/opencv.hpp"
 
 #include "xf_fusion.h"
-#include "fusion_lib.hpp"
+
 // imwrite
 #include "common/xf_sw_utils.h"
 // Í·Ïñ
@@ -66,41 +59,50 @@ void testBlend() {
 	srcA.copyTo(cvA.data);
 	srcB.copyTo(cvB.data);
 	// ÈÚºÏ ----------------------------------------------------------
-	int height0 = srcA.rows;
-	int width0 = srcA.cols;
-	int height1 = height0 / 2;
-	int width1 = width0 / 2;
-	int height2 = height1 / 2;
-	int width2 = width1 / 2;
-	int height3 = height2 / 2;
-	int width3 = width2 / 2;
-	int height4 = height3 / 2;
-	int width4 = width3 / 2;
+//	int height0 = srcA.rows;
+//	int width0 = srcA.cols;
+//	int height1 = height0 / 2;
+//	int width1 = width0 / 2;
+//	int height2 = height1 / 2;
+//	int width2 = width1 / 2;
+//	int height3 = height2 / 2;
+//	int width3 = width2 / 2;
+//	int height4 = height3 / 2;
+//	int width4 = width3 / 2;
+//
+//	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> tempScale1A(height0, width0);
+//	xf::Mat<_TYPE, HEIGHT*2, WIDTH*2, _NPC1> tempScale2A(height0*2, width0*2);
+//
+//	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> tempScale1B(height0, width0);
+//	xf::Mat<_TYPE, HEIGHT*2, WIDTH*2, _NPC1> tempScale2B(height0*2, width0*2);
+//
+//	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrA0(height0, width0);
+//	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrA1(height1, width1);
+//	// xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrA2(height2, width2);
+//
+//	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrB0(height0, width0);
+//	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrB1(height1, width1);
+//	// xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrB2(height2, width2);
+//
+//	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrS0(height0, width0);
+//	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrS1(height1, width1);
+//	// xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrS2(height2, width2);
+//
+//	fusion::dstCopyFromSrc<HEIGHT, WIDTH>(srcA, pyrA0);
+//	fusion::dstCopyFromSrc<HEIGHT, WIDTH>(srcB, pyrB0);
+//
+//	init(pyrA0, pyrA1, pyrB0, pyrB1, pyrS0, pyrS1);
+//
+//	blend(pyrA0, pyrA1, pyrB0, pyrB1, pyrS0, pyrS1, dst, tempScale1A, tempScale2A, tempScale1B, tempScale2B);
 
-	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> tempScale1A(height0, width0);
-	xf::Mat<_TYPE, HEIGHT*2, WIDTH*2, _NPC1> tempScale2A(height0*2, width0*2);
+	hls::stream<ap_axiu<8,1,1,1>> _srcA, _srcB, _dst;
+	cvMat2AXIvideoxf<XF_NPPC1>(cvA, _srcA);
+	cvMat2AXIvideoxf<XF_NPPC1>(cvB, _srcB);
+	blendTop(HEIGHT, WIDTH, _srcA, _srcB, _dst);
+	AXIvideo2cvMatxf<_NPC1, 8>(_dst, output);
 
-	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> tempScale1B(height0, width0);
-	xf::Mat<_TYPE, HEIGHT*2, WIDTH*2, _NPC1> tempScale2B(height0*2, width0*2);
-
-	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrA0(height0, width0);
-	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrA1(height1, width1);
-	// xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrA2(height2, width2);
-
-	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrB0(height0, width0);
-	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrB1(height1, width1);
-	// xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrB2(height2, width2);
-
-	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrS0(height0, width0);
-	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrS1(height1, width1);
-	// xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrS2(height2, width2);
-
-	fusion::dstCopyFromSrc<HEIGHT, WIDTH>(srcA, pyrA0);
-	fusion::dstCopyFromSrc<HEIGHT, WIDTH>(srcB, pyrB0);
-
-	blend(pyrA0, pyrA1, pyrB0, pyrB1, pyrS0, pyrS1, dst, tempScale1A, tempScale2A, tempScale1B, tempScale2B);
-
-	xf::imwrite("blend.jpg", dst);
+	cv::imwrite("blend.jpg", output);
+	// xf::imwrite("blend.jpg", dst);
 }
 
 int main (int argc, char** argv)

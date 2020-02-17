@@ -1,18 +1,29 @@
 #ifndef _MY_FUSION_H_
 #define _MY_FUSION_H_
-
 #include "hls_stream.h"
 #include "ap_int.h"
+#include "hls_math.h"
+
+#if !defined (__SYNTHESIS__)
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/core/core.hpp"
+#include "opencv2/opencv.hpp"
+#endif
+
 #include "common/xf_common.h"
 #include "common/xf_utility.h"
+#if !defined (__SYNTHESIS__)
+#include "common/xf_axi.h"
+#endif
+#include "common/xf_infra.h"
 #include "imgproc/xf_dilation.hpp"
 #include "imgproc/xf_pyr_down.hpp"
 #include "imgproc/xf_pyr_up.hpp"
 #include "imgproc/xf_add_weighted.hpp"
 #include "core/xf_mean_stddev.hpp"
 #include "core/xf_arithm.hpp"
-// 数学
-#include "hls_math.h"
+
 
 /* Optimization _TYPE */
 #define RO  0 // Resource Optimized (8-pixel implementation)
@@ -31,17 +42,11 @@
 
 // 图像融合顶层函数
 // void blend(xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& srcA, xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& srcB, xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& dst);
-void blend(
-		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrA0,
-		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrA1,
-		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrB0,
-		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrB1,
-		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrS0,
-		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& pyrS1,
-		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& dst,
-		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& tempScale1A,
-		xf::Mat<_TYPE, HEIGHT*2, WIDTH*2, _NPC1>& tempScale2A,
-		xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& tempScale1B,
-		xf::Mat<_TYPE, HEIGHT*2, WIDTH*2, _NPC1>& tempScale2B
+void blendTop(
+		int _h,
+		int _w,
+		hls::stream<ap_axiu<8,1,1,1>>& _pyrA0,
+		hls::stream<ap_axiu<8,1,1,1>>& _pyrB0,
+		hls::stream<ap_axiu<8,1,1,1>>& _dst
 		);
 #endif
