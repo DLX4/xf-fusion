@@ -69,6 +69,7 @@ void scaleDown(
 		xf::Mat<_TYPE, ROWS*2, COLS*2, _NPC1>& src,
 		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& dst
 		) {
+#pragma HLS DATAFLOW
 	int width = dst.cols;
 	int height = dst.rows;
 	for (int i = 0; i < height; i++) {

@@ -96,6 +96,14 @@ void blendTop(
 		hls::stream<ap_axiu<8,1,1,1>>& _pyrB0,
 		hls::stream<ap_axiu<8,1,1,1>>& _dst
 		) {
+#pragma HLS INTERFACE s_axilite port=_w
+#pragma HLS INTERFACE ap_stable port=_w
+#pragma HLS INTERFACE s_axilite port=_h
+#pragma HLS INTERFACE ap_stable port=_h
+#pragma HLS INTERFACE axis register both port=_dst
+#pragma HLS INTERFACE axis register both port=_pyrB0
+#pragma HLS INTERFACE axis register both port=_pyrA0
+#pragma HLS INTERFACE s_axilite register port=return
 
 	int height0 = _h;
 	int width0 = _w;
@@ -109,21 +117,32 @@ void blendTop(
 	int width4 = width3 / 2;
 
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> tempScale1A(height0, width0);
+//#pragma HLS STREAM variable=tempScale1A.data depth=1 dim=1
 	xf::Mat<_TYPE, HEIGHT*2, WIDTH*2, _NPC1> tempScale2A(height0, width0);
+//#pragma HLS STREAM variable=tempScale2A.data depth=1 dim=1
 
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> tempScale1B(height0, width0);
+//#pragma HLS STREAM variable=tempScale1B.data depth=1 dim=1
 	xf::Mat<_TYPE, HEIGHT*2, WIDTH*2, _NPC1> tempScale2B(height0, width0);
+//#pragma HLS STREAM variable=tempScale2B.data depth=1 dim=1
 
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> dst(height0, width0);
+//#pragma HLS STREAM variable=dst.data depth=1 dim=1
 
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrA0(height0, width0);
+//#pragma HLS STREAM variable=pyrA0.data depth=1 dim=1
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrA1(height1, width1);
+//#pragma HLS STREAM variable=pyrA1.data depth=1 dim=1
 
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrB0(height0, width0);
+//#pragma HLS STREAM variable=pyrB0.data depth=1 dim=1
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrB1(height1, width1);
+//#pragma HLS STREAM variable=pyrB1.data depth=1 dim=1
 
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrS0(height0, width0);
+//#pragma HLS STREAM variable=pyrS0.data depth=1 dim=1
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrS1(height1, width1);
+//#pragma HLS STREAM variable=pyrS1.data depth=1 dim=1
 
 	xf::AXIvideo2xfMat<8, _TYPE, HEIGHT, WIDTH, _NPC1>(_pyrA0, pyrA0);
 	//xf::AXIvideo2xfMat<8, _TYPE, HEIGHT, WIDTH, _NPC1>(_pyrA1, pyrA1);
