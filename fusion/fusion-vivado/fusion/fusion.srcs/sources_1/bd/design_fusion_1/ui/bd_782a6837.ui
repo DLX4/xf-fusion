@@ -1,0 +1,45 @@
+{
+   "ExpandedHierarchyInLayout":"",
+   "guistr":"# # String gsaved with Nlview 7.0.19  2019-03-26 bk=1.5019 VDI=41 GEI=35 GUI=JA:9.0 non-TLS
+#  -string -flagsOSRD
+preplace port p_pyr0_0 -pg 1 -lvl 0 -x 0 -y 140 -defaultsOSRD
+preplace port p_pyr0_1 -pg 1 -lvl 0 -x 0 -y 540 -defaultsOSRD
+preplace port p_dst_0 -pg 1 -lvl 9 -x 2350 -y 176 -defaultsOSRD
+preplace inst axis_broadcaster_0 -pg 1 -lvl 1 -x 120 -y 200 -defaultsOSRD -resize 120 208
+preplace inst axis_broadcaster_1 -pg 1 -lvl 3 -x 640 -y 130 -defaultsOSRD -resize 101 186
+preplace inst axis_broadcaster_2 -pg 1 -lvl 3 -x 640 -y 380 -defaultsOSRD -resize 117 222
+preplace inst axis_broadcaster_3 -pg 1 -lvl 1 -x 120 -y 600 -defaultsOSRD -resize 133 208
+preplace inst pyrdownTop_0 -pg 1 -lvl 2 -x 380 -y 90 -defaultsOSRD
+preplace inst pyrdownTop_1 -pg 1 -lvl 2 -x 380 -y 660 -defaultsOSRD
+preplace inst addTop_0 -pg 1 -lvl 8 -x 2190 -y 186 -defaultsOSRD -resize 240 142
+preplace inst blendTop_0 -pg 1 -lvl 6 -x 1550 -y 290 -defaultsOSRD
+preplace inst pyrupTop_0 -pg 1 -lvl 4 -x 900 -y 100 -defaultsOSRD -resize 230 134
+preplace inst pyrupTop_1 -pg 1 -lvl 4 -x 900 -y 450 -defaultsOSRD -resize 274 150
+preplace inst pyrupTop_2 -pg 1 -lvl 7 -x 1880 -y 180 -defaultsOSRD
+preplace inst subTop_0 -pg 1 -lvl 5 -x 1230 -y 130 -defaultsOSRD -resize 250 230
+preplace inst subTop_1 -pg 1 -lvl 5 -x 1230 -y 460 -defaultsOSRD
+preplace netloc pyrupTop_0_p_pyrUp 1 4 1 1060J 60n
+preplace netloc pyrupTop_1_p_pyrUp 1 4 1 1060J 420n
+preplace netloc subTop_0_p_pyrL0 1 5 1 1380 130n
+preplace netloc subTop_1_p_pyrL0 1 5 1 1390 270n
+preplace netloc p_pyr0_0_1 1 0 1 NJ 140
+preplace netloc axis_broadcaster_0_M00_AXIS 1 1 1 220 60n
+preplace netloc axis_broadcaster_0_M01_AXIS 1 1 4 NJ 250 520J 10 NJ 10 1070
+preplace netloc pyrdownTop_0_p_pyrG1 1 2 1 530J 80n
+preplace netloc axis_broadcaster_1_M00_AXIS 1 3 1 740 72n
+preplace netloc axis_broadcaster_1_M01_AXIS 1 3 3 740J 270 NJ 270 1380
+preplace netloc pyrdownTop_1_p_pyrG1 1 2 1 530 310n
+preplace netloc axis_broadcaster_2_M01_AXIS 1 3 1 740 420n
+preplace netloc p_pyr0_1_1 1 0 1 NJ 540
+preplace netloc axis_broadcaster_3_M01_AXIS 1 1 1 220J 630n
+preplace netloc axis_broadcaster_2_M00_AXIS 1 3 3 740 290 NJ 290 NJ
+preplace netloc axis_broadcaster_3_M00_AXIS 1 1 4 N 550 NJ 550 NJ 550 1070J
+preplace netloc blendTop_0_p_pyrS1 1 6 1 1710 150n
+preplace netloc pyrupTop_2_p_pyrUp 1 7 1 2030J 154n
+preplace netloc blendTop_0_p_pyrS0 1 6 2 1700 90 2020J
+preplace netloc addTop_0_p_dst 1 8 1 2330 176n
+levelinfo -pg 1 0 120 380 640 900 1230 1550 1880 2190 2350
+pagesize -pg 1 -db -bbox -sgen -110 0 2450 750
+"
+}
+

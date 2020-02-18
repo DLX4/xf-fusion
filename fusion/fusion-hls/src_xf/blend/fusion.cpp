@@ -16,8 +16,6 @@ void blendL(
 }
 
 void blendTop(
-		int _h,
-		int _w,
 		hls::stream<ap_axiu<8,1,1,1>>& _pyrLA0,
 		hls::stream<ap_axiu<8,1,1,1>>& _pyrLA1,
 		hls::stream<ap_axiu<8,1,1,1>>& _pyrLB0,
@@ -26,20 +24,15 @@ void blendTop(
 		hls::stream<ap_axiu<8,1,1,1>>& _pyrS1
 		) {
 #pragma HLS DATAFLOW
-#pragma HLS INTERFACE s_axilite port=_w
-#pragma HLS INTERFACE ap_stable port=_w
-#pragma HLS INTERFACE s_axilite port=_h
-#pragma HLS INTERFACE ap_stable port=_h
 #pragma HLS INTERFACE axis register both port=_pyrLA0
 #pragma HLS INTERFACE axis register both port=_pyrLA1
 #pragma HLS INTERFACE axis register both port=_pyrLB0
 #pragma HLS INTERFACE axis register both port=_pyrLB1
 #pragma HLS INTERFACE axis register both port=_pyrS0
 #pragma HLS INTERFACE axis register both port=_pyrS1
-#pragma HLS INTERFACE s_axilite register port=return
 
-	int height0 = _h;
-	int width0 = _w;
+	int height0 = HEIGHT;
+	int width0 = WIDTH;
 
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrLA0(height0, width0);
 #pragma HLS STREAM variable=pyrLA0.data depth=1 dim=1

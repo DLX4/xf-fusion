@@ -1,0 +1,274 @@
+{
+  "design": {
+    "design_info": {
+      "boundary_crc": "0x0",
+      "device": "xc7z020clg484-1",
+      "name": "design_fusion_1",
+      "synth_flow_mode": "Hierarchical",
+      "tool_version": "2019.1"
+    },
+    "design_tree": {
+      "axis_broadcaster_0": "",
+      "axis_broadcaster_1": "",
+      "axis_broadcaster_2": "",
+      "axis_broadcaster_3": "",
+      "pyrdownTop_0": "",
+      "pyrdownTop_1": "",
+      "addTop_0": "",
+      "blendTop_0": "",
+      "pyrupTop_0": "",
+      "pyrupTop_1": "",
+      "pyrupTop_2": "",
+      "subTop_0": "",
+      "subTop_1": ""
+    },
+    "interface_ports": {
+      "p_pyr0_0": {
+        "mode": "Slave",
+        "vlnv": "xilinx.com:interface:axis_rtl:1.0",
+        "parameters": {
+          "HAS_TKEEP": {
+            "value": "1"
+          },
+          "HAS_TLAST": {
+            "value": "1"
+          },
+          "HAS_TREADY": {
+            "value": "1"
+          },
+          "HAS_TSTRB": {
+            "value": "1"
+          },
+          "LAYERED_METADATA": {
+            "value": "undef"
+          },
+          "TDATA_NUM_BYTES": {
+            "value": "1"
+          },
+          "TDEST_WIDTH": {
+            "value": "1"
+          },
+          "TID_WIDTH": {
+            "value": "1"
+          },
+          "TUSER_WIDTH": {
+            "value": "1"
+          }
+        }
+      },
+      "p_pyr0_1": {
+        "mode": "Slave",
+        "vlnv": "xilinx.com:interface:axis_rtl:1.0",
+        "parameters": {
+          "HAS_TKEEP": {
+            "value": "1"
+          },
+          "HAS_TLAST": {
+            "value": "1"
+          },
+          "HAS_TREADY": {
+            "value": "1"
+          },
+          "HAS_TSTRB": {
+            "value": "1"
+          },
+          "LAYERED_METADATA": {
+            "value": "undef"
+          },
+          "TDATA_NUM_BYTES": {
+            "value": "1"
+          },
+          "TDEST_WIDTH": {
+            "value": "1"
+          },
+          "TID_WIDTH": {
+            "value": "1"
+          },
+          "TUSER_WIDTH": {
+            "value": "1"
+          }
+        }
+      },
+      "p_dst_0": {
+        "mode": "Master",
+        "vlnv": "xilinx.com:interface:axis_rtl:1.0"
+      }
+    },
+    "components": {
+      "axis_broadcaster_0": {
+        "vlnv": "xilinx.com:ip:axis_broadcaster:1.1",
+        "xci_name": "design_fusion_1_axis_broadcaster_0_0"
+      },
+      "axis_broadcaster_1": {
+        "vlnv": "xilinx.com:ip:axis_broadcaster:1.1",
+        "xci_name": "design_fusion_1_axis_broadcaster_0_1"
+      },
+      "axis_broadcaster_2": {
+        "vlnv": "xilinx.com:ip:axis_broadcaster:1.1",
+        "xci_name": "design_fusion_1_axis_broadcaster_1_0"
+      },
+      "axis_broadcaster_3": {
+        "vlnv": "xilinx.com:ip:axis_broadcaster:1.1",
+        "xci_name": "design_fusion_1_axis_broadcaster_0_2"
+      },
+      "pyrdownTop_0": {
+        "vlnv": "xilinx.com:hls:pyrdownTop:1.0",
+        "xci_name": "design_fusion_1_pyrdownTop_0_0"
+      },
+      "pyrdownTop_1": {
+        "vlnv": "xilinx.com:hls:pyrdownTop:1.0",
+        "xci_name": "design_fusion_1_pyrdownTop_0_1"
+      },
+      "addTop_0": {
+        "vlnv": "xilinx.com:hls:addTop:1.0",
+        "xci_name": "design_fusion_1_addTop_0_0"
+      },
+      "blendTop_0": {
+        "vlnv": "xilinx.com:hls:blendTop:1.0",
+        "xci_name": "design_fusion_1_blendTop_0_0"
+      },
+      "pyrupTop_0": {
+        "vlnv": "xilinx.com:hls:pyrupTop:1.0",
+        "xci_name": "design_fusion_1_pyrupTop_0_0"
+      },
+      "pyrupTop_1": {
+        "vlnv": "xilinx.com:hls:pyrupTop:1.0",
+        "xci_name": "design_fusion_1_pyrupTop_0_1"
+      },
+      "pyrupTop_2": {
+        "vlnv": "xilinx.com:hls:pyrupTop:1.0",
+        "xci_name": "design_fusion_1_pyrupTop_0_2"
+      },
+      "subTop_0": {
+        "vlnv": "xilinx.com:hls:subTop:1.0",
+        "xci_name": "design_fusion_1_subTop_0_0"
+      },
+      "subTop_1": {
+        "vlnv": "xilinx.com:hls:subTop:1.0",
+        "xci_name": "design_fusion_1_subTop_0_1"
+      }
+    },
+    "interface_nets": {
+      "subTop_1_p_pyrL0": {
+        "interface_ports": [
+          "subTop_1/p_pyrL0",
+          "blendTop_0/p_pyrLB0"
+        ]
+      },
+      "pyrupTop_1_p_pyrUp": {
+        "interface_ports": [
+          "pyrupTop_1/p_pyrUp",
+          "subTop_1/p_pyrG1Up"
+        ]
+      },
+      "subTop_0_p_pyrL0": {
+        "interface_ports": [
+          "subTop_0/p_pyrL0",
+          "blendTop_0/p_pyrLA0"
+        ]
+      },
+      "pyrdownTop_1_p_pyrG1": {
+        "interface_ports": [
+          "pyrdownTop_1/p_pyrG1",
+          "axis_broadcaster_2/S_AXIS"
+        ]
+      },
+      "axis_broadcaster_0_M01_AXIS": {
+        "interface_ports": [
+          "axis_broadcaster_0/M01_AXIS",
+          "subTop_0/p_pyrG0"
+        ]
+      },
+      "pyrupTop_2_p_pyrUp": {
+        "interface_ports": [
+          "pyrupTop_2/p_pyrUp",
+          "addTop_0/p_pyrS1Up"
+        ]
+      },
+      "axis_broadcaster_0_M00_AXIS": {
+        "interface_ports": [
+          "axis_broadcaster_0/M00_AXIS",
+          "pyrdownTop_0/p_pyr0"
+        ]
+      },
+      "pyrupTop_0_p_pyrUp": {
+        "interface_ports": [
+          "pyrupTop_0/p_pyrUp",
+          "subTop_0/p_pyrG1Up"
+        ]
+      },
+      "p_pyr0_0_1": {
+        "interface_ports": [
+          "p_pyr0_0",
+          "axis_broadcaster_0/S_AXIS"
+        ]
+      },
+      "axis_broadcaster_2_M01_AXIS": {
+        "interface_ports": [
+          "axis_broadcaster_2/M01_AXIS",
+          "pyrupTop_1/p_pyrX"
+        ]
+      },
+      "axis_broadcaster_1_M01_AXIS": {
+        "interface_ports": [
+          "axis_broadcaster_1/M01_AXIS",
+          "blendTop_0/p_pyrLA1"
+        ]
+      },
+      "axis_broadcaster_1_M00_AXIS": {
+        "interface_ports": [
+          "axis_broadcaster_1/M00_AXIS",
+          "pyrupTop_0/p_pyrX"
+        ]
+      },
+      "pyrdownTop_0_p_pyrG1": {
+        "interface_ports": [
+          "pyrdownTop_0/p_pyrG1",
+          "axis_broadcaster_1/S_AXIS"
+        ]
+      },
+      "axis_broadcaster_3_M00_AXIS": {
+        "interface_ports": [
+          "axis_broadcaster_3/M00_AXIS",
+          "subTop_1/p_pyrG0"
+        ]
+      },
+      "blendTop_0_p_pyrS1": {
+        "interface_ports": [
+          "blendTop_0/p_pyrS1",
+          "pyrupTop_2/p_pyrX"
+        ]
+      },
+      "axis_broadcaster_3_M01_AXIS": {
+        "interface_ports": [
+          "axis_broadcaster_3/M01_AXIS",
+          "pyrdownTop_1/p_pyr0"
+        ]
+      },
+      "p_pyr0_1_1": {
+        "interface_ports": [
+          "p_pyr0_1",
+          "axis_broadcaster_3/S_AXIS"
+        ]
+      },
+      "axis_broadcaster_2_M00_AXIS": {
+        "interface_ports": [
+          "axis_broadcaster_2/M00_AXIS",
+          "blendTop_0/p_pyrLB1"
+        ]
+      },
+      "addTop_0_p_dst": {
+        "interface_ports": [
+          "p_dst_0",
+          "addTop_0/p_dst"
+        ]
+      },
+      "blendTop_0_p_pyrS0": {
+        "interface_ports": [
+          "blendTop_0/p_pyrS0",
+          "addTop_0/p_pyrS0"
+        ]
+      }
+    }
+  }
+}

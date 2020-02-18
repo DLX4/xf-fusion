@@ -1,0 +1,846 @@
+Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2019.1 (win64) Build 2552052 Fri May 24 14:49:42 MDT 2019
+| Date         : Tue Feb 18 16:30:44 2020
+| Host         : WIN10-812230011 running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xc7z020clg484-1
+------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_fusion_1_subTop_0_1'
+
+1. Summary
+----------
+
+CAUTION (success, with warnings) in the upgrade of design_fusion_1_subTop_0_1 (xilinx.com:hls:subTop:1.0) from (Rev. 2002181445) to (Rev. 2002181630)
+
+After upgrade, an IP may have parameter and port differences compared to the original customization. Please review the parameters within the IP customization GUI to ensure proper functionality. Also, please review the updated IP instantiation template to ensure proper connectivity, and update your design if required.
+
+2. Interface Information
+------------------------
+
+Detected external interface differences while upgrading 'design_fusion_1_subTop_0_1'.
+
+
+-Upgrade has removed interface 'interrupt'
+
+-Upgrade has removed interface 's_axi_AXILiteS'
+
+-Upgrade has added interface 'ap_ctrl' (xilinx.com:interface:acc_handshake:1.0)
+
+
+3. Connection Warnings
+----------------------
+
+Detected external port differences while upgrading 'design_fusion_1_subTop_0_1'. These changes may impact your design.
+
+
+-Upgrade has removed port 'interrupt'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARADDR'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWADDR'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_BREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_BRESP'
+
+-Upgrade has removed port 's_axi_AXILiteS_BVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_RDATA'
+
+-Upgrade has removed port 's_axi_AXILiteS_RREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_RRESP'
+
+-Upgrade has removed port 's_axi_AXILiteS_RVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_WDATA'
+
+-Upgrade has removed port 's_axi_AXILiteS_WREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_WSTRB'
+
+-Upgrade has removed port 's_axi_AXILiteS_WVALID'
+
+-Upgrade has added port 'ap_done'
+
+-Upgrade has added port 'ap_idle'
+
+-Upgrade has added port 'ap_ready'
+
+-Upgrade has added port 'ap_start'
+
+
+
+
+
+
+
+Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2019.1 (win64) Build 2552052 Fri May 24 14:49:42 MDT 2019
+| Date         : Tue Feb 18 16:30:44 2020
+| Host         : WIN10-812230011 running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xc7z020clg484-1
+------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_fusion_1_subTop_0_0'
+
+1. Summary
+----------
+
+CAUTION (success, with warnings) in the upgrade of design_fusion_1_subTop_0_0 (xilinx.com:hls:subTop:1.0) from (Rev. 2002181445) to (Rev. 2002181630)
+
+After upgrade, an IP may have parameter and port differences compared to the original customization. Please review the parameters within the IP customization GUI to ensure proper functionality. Also, please review the updated IP instantiation template to ensure proper connectivity, and update your design if required.
+
+2. Interface Information
+------------------------
+
+Detected external interface differences while upgrading 'design_fusion_1_subTop_0_0'.
+
+
+-Upgrade has removed interface 'interrupt'
+
+-Upgrade has removed interface 's_axi_AXILiteS'
+
+-Upgrade has added interface 'ap_ctrl' (xilinx.com:interface:acc_handshake:1.0)
+
+
+3. Connection Warnings
+----------------------
+
+Detected external port differences while upgrading 'design_fusion_1_subTop_0_0'. These changes may impact your design.
+
+
+-Upgrade has removed port 'interrupt'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARADDR'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWADDR'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_BREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_BRESP'
+
+-Upgrade has removed port 's_axi_AXILiteS_BVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_RDATA'
+
+-Upgrade has removed port 's_axi_AXILiteS_RREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_RRESP'
+
+-Upgrade has removed port 's_axi_AXILiteS_RVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_WDATA'
+
+-Upgrade has removed port 's_axi_AXILiteS_WREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_WSTRB'
+
+-Upgrade has removed port 's_axi_AXILiteS_WVALID'
+
+-Upgrade has added port 'ap_done'
+
+-Upgrade has added port 'ap_idle'
+
+-Upgrade has added port 'ap_ready'
+
+-Upgrade has added port 'ap_start'
+
+
+
+
+
+
+
+Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2019.1 (win64) Build 2552052 Fri May 24 14:49:42 MDT 2019
+| Date         : Tue Feb 18 16:28:11 2020
+| Host         : WIN10-812230011 running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xc7z020clg484-1
+------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_fusion_1_pyrupTop_0_2'
+
+1. Summary
+----------
+
+CAUTION (success, with warnings) in the upgrade of design_fusion_1_pyrupTop_0_2 (xilinx.com:hls:pyrupTop:1.0) from (Rev. 2002181447) to (Rev. 2002181627)
+
+After upgrade, an IP may have parameter and port differences compared to the original customization. Please review the parameters within the IP customization GUI to ensure proper functionality. Also, please review the updated IP instantiation template to ensure proper connectivity, and update your design if required.
+
+2. Interface Information
+------------------------
+
+Detected external interface differences while upgrading 'design_fusion_1_pyrupTop_0_2'.
+
+
+-Upgrade has removed interface 'interrupt'
+
+-Upgrade has removed interface 's_axi_AXILiteS'
+
+-Upgrade has added interface 'ap_ctrl' (xilinx.com:interface:acc_handshake:1.0)
+
+
+3. Connection Warnings
+----------------------
+
+Detected external port differences while upgrading 'design_fusion_1_pyrupTop_0_2'. These changes may impact your design.
+
+
+-Upgrade has removed port 'interrupt'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARADDR'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWADDR'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_BREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_BRESP'
+
+-Upgrade has removed port 's_axi_AXILiteS_BVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_RDATA'
+
+-Upgrade has removed port 's_axi_AXILiteS_RREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_RRESP'
+
+-Upgrade has removed port 's_axi_AXILiteS_RVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_WDATA'
+
+-Upgrade has removed port 's_axi_AXILiteS_WREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_WSTRB'
+
+-Upgrade has removed port 's_axi_AXILiteS_WVALID'
+
+-Upgrade has added port 'ap_done'
+
+-Upgrade has added port 'ap_idle'
+
+-Upgrade has added port 'ap_ready'
+
+-Upgrade has added port 'ap_start'
+
+
+
+
+
+
+
+Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2019.1 (win64) Build 2552052 Fri May 24 14:49:42 MDT 2019
+| Date         : Tue Feb 18 16:28:11 2020
+| Host         : WIN10-812230011 running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xc7z020clg484-1
+------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_fusion_1_pyrupTop_0_1'
+
+1. Summary
+----------
+
+CAUTION (success, with warnings) in the upgrade of design_fusion_1_pyrupTop_0_1 (xilinx.com:hls:pyrupTop:1.0) from (Rev. 2002181447) to (Rev. 2002181627)
+
+After upgrade, an IP may have parameter and port differences compared to the original customization. Please review the parameters within the IP customization GUI to ensure proper functionality. Also, please review the updated IP instantiation template to ensure proper connectivity, and update your design if required.
+
+2. Interface Information
+------------------------
+
+Detected external interface differences while upgrading 'design_fusion_1_pyrupTop_0_1'.
+
+
+-Upgrade has removed interface 'interrupt'
+
+-Upgrade has removed interface 's_axi_AXILiteS'
+
+-Upgrade has added interface 'ap_ctrl' (xilinx.com:interface:acc_handshake:1.0)
+
+
+3. Connection Warnings
+----------------------
+
+Detected external port differences while upgrading 'design_fusion_1_pyrupTop_0_1'. These changes may impact your design.
+
+
+-Upgrade has removed port 'interrupt'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARADDR'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWADDR'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_BREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_BRESP'
+
+-Upgrade has removed port 's_axi_AXILiteS_BVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_RDATA'
+
+-Upgrade has removed port 's_axi_AXILiteS_RREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_RRESP'
+
+-Upgrade has removed port 's_axi_AXILiteS_RVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_WDATA'
+
+-Upgrade has removed port 's_axi_AXILiteS_WREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_WSTRB'
+
+-Upgrade has removed port 's_axi_AXILiteS_WVALID'
+
+-Upgrade has added port 'ap_done'
+
+-Upgrade has added port 'ap_idle'
+
+-Upgrade has added port 'ap_ready'
+
+-Upgrade has added port 'ap_start'
+
+
+
+
+
+
+
+Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2019.1 (win64) Build 2552052 Fri May 24 14:49:42 MDT 2019
+| Date         : Tue Feb 18 16:28:11 2020
+| Host         : WIN10-812230011 running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xc7z020clg484-1
+------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_fusion_1_pyrupTop_0_0'
+
+1. Summary
+----------
+
+CAUTION (success, with warnings) in the upgrade of design_fusion_1_pyrupTop_0_0 (xilinx.com:hls:pyrupTop:1.0) from (Rev. 2002181447) to (Rev. 2002181627)
+
+After upgrade, an IP may have parameter and port differences compared to the original customization. Please review the parameters within the IP customization GUI to ensure proper functionality. Also, please review the updated IP instantiation template to ensure proper connectivity, and update your design if required.
+
+2. Interface Information
+------------------------
+
+Detected external interface differences while upgrading 'design_fusion_1_pyrupTop_0_0'.
+
+
+-Upgrade has removed interface 'interrupt'
+
+-Upgrade has removed interface 's_axi_AXILiteS'
+
+-Upgrade has added interface 'ap_ctrl' (xilinx.com:interface:acc_handshake:1.0)
+
+
+3. Connection Warnings
+----------------------
+
+Detected external port differences while upgrading 'design_fusion_1_pyrupTop_0_0'. These changes may impact your design.
+
+
+-Upgrade has removed port 'interrupt'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARADDR'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWADDR'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_BREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_BRESP'
+
+-Upgrade has removed port 's_axi_AXILiteS_BVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_RDATA'
+
+-Upgrade has removed port 's_axi_AXILiteS_RREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_RRESP'
+
+-Upgrade has removed port 's_axi_AXILiteS_RVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_WDATA'
+
+-Upgrade has removed port 's_axi_AXILiteS_WREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_WSTRB'
+
+-Upgrade has removed port 's_axi_AXILiteS_WVALID'
+
+-Upgrade has added port 'ap_done'
+
+-Upgrade has added port 'ap_idle'
+
+-Upgrade has added port 'ap_ready'
+
+-Upgrade has added port 'ap_start'
+
+
+
+
+
+
+
+Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2019.1 (win64) Build 2552052 Fri May 24 14:49:42 MDT 2019
+| Date         : Tue Feb 18 16:24:08 2020
+| Host         : WIN10-812230011 running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xc7z020clg484-1
+------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_fusion_1_blendTop_0_0'
+
+1. Summary
+----------
+
+CAUTION (success, with warnings) in the upgrade of design_fusion_1_blendTop_0_0 (xilinx.com:hls:blendTop:1.0) from (Rev. 2002181448) to (Rev. 2002181622)
+
+After upgrade, an IP may have parameter and port differences compared to the original customization. Please review the parameters within the IP customization GUI to ensure proper functionality. Also, please review the updated IP instantiation template to ensure proper connectivity, and update your design if required.
+
+2. Interface Information
+------------------------
+
+Detected external interface differences while upgrading 'design_fusion_1_blendTop_0_0'.
+
+
+-Upgrade has removed interface 'interrupt'
+
+-Upgrade has removed interface 's_axi_AXILiteS'
+
+-Upgrade has added interface 'ap_ctrl' (xilinx.com:interface:acc_handshake:1.0)
+
+
+3. Connection Warnings
+----------------------
+
+Detected external port differences while upgrading 'design_fusion_1_blendTop_0_0'. These changes may impact your design.
+
+
+-Upgrade has removed port 'interrupt'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARADDR'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWADDR'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_BREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_BRESP'
+
+-Upgrade has removed port 's_axi_AXILiteS_BVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_RDATA'
+
+-Upgrade has removed port 's_axi_AXILiteS_RREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_RRESP'
+
+-Upgrade has removed port 's_axi_AXILiteS_RVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_WDATA'
+
+-Upgrade has removed port 's_axi_AXILiteS_WREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_WSTRB'
+
+-Upgrade has removed port 's_axi_AXILiteS_WVALID'
+
+-Upgrade has added port 'ap_done'
+
+-Upgrade has added port 'ap_idle'
+
+-Upgrade has added port 'ap_ready'
+
+-Upgrade has added port 'ap_start'
+
+
+
+
+
+
+
+Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2019.1 (win64) Build 2552052 Fri May 24 14:49:42 MDT 2019
+| Date         : Tue Feb 18 16:20:15 2020
+| Host         : WIN10-812230011 running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xc7z020clg484-1
+------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_fusion_1_addTop_0_0'
+
+1. Summary
+----------
+
+CAUTION (success, with warnings) in the upgrade of design_fusion_1_addTop_0_0 (xilinx.com:hls:addTop:1.0) from (Rev. 2002181450) to (Rev. 2002181619)
+
+After upgrade, an IP may have parameter and port differences compared to the original customization. Please review the parameters within the IP customization GUI to ensure proper functionality. Also, please review the updated IP instantiation template to ensure proper connectivity, and update your design if required.
+
+2. Interface Information
+------------------------
+
+Detected external interface differences while upgrading 'design_fusion_1_addTop_0_0'.
+
+
+-Upgrade has removed interface 'interrupt'
+
+-Upgrade has removed interface 's_axi_AXILiteS'
+
+-Upgrade has added interface 'ap_ctrl' (xilinx.com:interface:acc_handshake:1.0)
+
+
+3. Connection Warnings
+----------------------
+
+Detected external port differences while upgrading 'design_fusion_1_addTop_0_0'. These changes may impact your design.
+
+
+-Upgrade has removed port 'interrupt'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARADDR'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWADDR'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_BREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_BRESP'
+
+-Upgrade has removed port 's_axi_AXILiteS_BVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_RDATA'
+
+-Upgrade has removed port 's_axi_AXILiteS_RREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_RRESP'
+
+-Upgrade has removed port 's_axi_AXILiteS_RVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_WDATA'
+
+-Upgrade has removed port 's_axi_AXILiteS_WREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_WSTRB'
+
+-Upgrade has removed port 's_axi_AXILiteS_WVALID'
+
+-Upgrade has added port 'ap_done'
+
+-Upgrade has added port 'ap_idle'
+
+-Upgrade has added port 'ap_ready'
+
+-Upgrade has added port 'ap_start'
+
+
+
+
+
+
+
+Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2019.1 (win64) Build 2552052 Fri May 24 14:49:42 MDT 2019
+| Date         : Tue Feb 18 16:17:25 2020
+| Host         : WIN10-812230011 running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xc7z020clg484-1
+------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_fusion_1_pyrdownTop_0_1'
+
+1. Summary
+----------
+
+CAUTION (success, with warnings) in the upgrade of design_fusion_1_pyrdownTop_0_1 (xilinx.com:hls:pyrdownTop:1.0) from (Rev. 2002181557) to (Rev. 2002181614)
+
+After upgrade, an IP may have parameter and port differences compared to the original customization. Please review the parameters within the IP customization GUI to ensure proper functionality. Also, please review the updated IP instantiation template to ensure proper connectivity, and update your design if required.
+
+2. Interface Information
+------------------------
+
+Detected external interface differences while upgrading 'design_fusion_1_pyrdownTop_0_1'.
+
+
+-Upgrade has removed interface 'interrupt'
+
+-Upgrade has removed interface 's_axi_AXILiteS'
+
+-Upgrade has added interface 'ap_ctrl' (xilinx.com:interface:acc_handshake:1.0)
+
+
+3. Connection Warnings
+----------------------
+
+Detected external port differences while upgrading 'design_fusion_1_pyrdownTop_0_1'. These changes may impact your design.
+
+
+-Upgrade has removed port 'interrupt'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARADDR'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWADDR'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_BREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_BRESP'
+
+-Upgrade has removed port 's_axi_AXILiteS_BVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_RDATA'
+
+-Upgrade has removed port 's_axi_AXILiteS_RREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_RRESP'
+
+-Upgrade has removed port 's_axi_AXILiteS_RVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_WDATA'
+
+-Upgrade has removed port 's_axi_AXILiteS_WREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_WSTRB'
+
+-Upgrade has removed port 's_axi_AXILiteS_WVALID'
+
+-Upgrade has added port 'ap_done'
+
+-Upgrade has added port 'ap_idle'
+
+-Upgrade has added port 'ap_ready'
+
+-Upgrade has added port 'ap_start'
+
+
+
+
+
+
+
+Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2019.1 (win64) Build 2552052 Fri May 24 14:49:42 MDT 2019
+| Date         : Tue Feb 18 16:17:25 2020
+| Host         : WIN10-812230011 running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xc7z020clg484-1
+------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_fusion_1_pyrdownTop_0_0'
+
+1. Summary
+----------
+
+CAUTION (success, with warnings) in the upgrade of design_fusion_1_pyrdownTop_0_0 (xilinx.com:hls:pyrdownTop:1.0) from (Rev. 2002181557) to (Rev. 2002181614)
+
+After upgrade, an IP may have parameter and port differences compared to the original customization. Please review the parameters within the IP customization GUI to ensure proper functionality. Also, please review the updated IP instantiation template to ensure proper connectivity, and update your design if required.
+
+2. Interface Information
+------------------------
+
+Detected external interface differences while upgrading 'design_fusion_1_pyrdownTop_0_0'.
+
+
+-Upgrade has removed interface 'interrupt'
+
+-Upgrade has removed interface 's_axi_AXILiteS'
+
+-Upgrade has added interface 'ap_ctrl' (xilinx.com:interface:acc_handshake:1.0)
+
+
+3. Connection Warnings
+----------------------
+
+Detected external port differences while upgrading 'design_fusion_1_pyrdownTop_0_0'. These changes may impact your design.
+
+
+-Upgrade has removed port 'interrupt'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARADDR'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_ARVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWADDR'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_AWVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_BREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_BRESP'
+
+-Upgrade has removed port 's_axi_AXILiteS_BVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_RDATA'
+
+-Upgrade has removed port 's_axi_AXILiteS_RREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_RRESP'
+
+-Upgrade has removed port 's_axi_AXILiteS_RVALID'
+
+-Upgrade has removed port 's_axi_AXILiteS_WDATA'
+
+-Upgrade has removed port 's_axi_AXILiteS_WREADY'
+
+-Upgrade has removed port 's_axi_AXILiteS_WSTRB'
+
+-Upgrade has removed port 's_axi_AXILiteS_WVALID'
+
+-Upgrade has added port 'ap_done'
+
+-Upgrade has added port 'ap_idle'
+
+-Upgrade has added port 'ap_ready'
+
+-Upgrade has added port 'ap_start'
+
+
+
+
+
+
+
+Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2019.1 (win64) Build 2552052 Fri May 24 14:49:42 MDT 2019
+| Date         : Tue Feb 18 15:58:50 2020
+| Host         : WIN10-812230011 running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xc7z020clg484-1
+------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_fusion_1_pyrdownTop_0_1'
+
+1. Summary
+----------
+
+CAUTION (success, with warnings) in the upgrade of design_fusion_1_pyrdownTop_0_1 (xilinx.com:hls:pyrdownTop:1.0) from (Rev. 2002181427) to (Rev. 2002181557)
+
+After upgrade, an IP may have parameter and port differences compared to the original customization. Please review the parameters within the IP customization GUI to ensure proper functionality. Also, please review the updated IP instantiation template to ensure proper connectivity, and update your design if required.
+
+2. Connection Warnings
+----------------------
+
+Detected external port differences while upgrading 'design_fusion_1_pyrdownTop_0_1'. These changes may impact your design.
+
+
+-Upgraded port 's_axi_AXILiteS_ARADDR' width 4 differs from original width 5
+
+-Upgraded port 's_axi_AXILiteS_AWADDR' width 4 differs from original width 5
+
+
+
+
+
+
+
+Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2019.1 (win64) Build 2552052 Fri May 24 14:49:42 MDT 2019
+| Date         : Tue Feb 18 15:58:50 2020
+| Host         : WIN10-812230011 running 64-bit major release  (build 9200)
+| Command      : upgrade_ip
+| Device       : xc7z020clg484-1
+------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'design_fusion_1_pyrdownTop_0_0'
+
+1. Summary
+----------
+
+CAUTION (success, with warnings) in the upgrade of design_fusion_1_pyrdownTop_0_0 (xilinx.com:hls:pyrdownTop:1.0) from (Rev. 2002181427) to (Rev. 2002181557)
+
+After upgrade, an IP may have parameter and port differences compared to the original customization. Please review the parameters within the IP customization GUI to ensure proper functionality. Also, please review the updated IP instantiation template to ensure proper connectivity, and update your design if required.
+
+2. Connection Warnings
+----------------------
+
+Detected external port differences while upgrading 'design_fusion_1_pyrdownTop_0_0'. These changes may impact your design.
+
+
+-Upgraded port 's_axi_AXILiteS_ARADDR' width 4 differs from original width 5
+
+-Upgraded port 's_axi_AXILiteS_AWADDR' width 4 differs from original width 5
+
+
