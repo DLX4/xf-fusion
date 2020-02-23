@@ -34,17 +34,20 @@ void blendTop(
 	int height0 = HEIGHT;
 	int width0 = WIDTH;
 
+	int height1 = height0 / 2;
+	int width1 = width0 / 2;
+
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrLA0(height0, width0);
 #pragma HLS STREAM variable=pyrLA0.data depth=1 dim=1
-	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrLA1(height0, width0);
+	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrLA1(height1, width1);
 #pragma HLS STREAM variable=pyrLA1.data depth=1 dim=1
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrLB0(height0, width0);
 #pragma HLS STREAM variable=pyrLB0.data depth=1 dim=1
-	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrLB1(height0, width0);
+	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrLB1(height1, width1);
 #pragma HLS STREAM variable=pyrLB1.data depth=1 dim=1
 	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrS0(height0, width0);
 #pragma HLS STREAM variable=pyrS0.data depth=1 dim=1
-	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrS1(height0, width0);
+	xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1> pyrS1(height1, width1);
 #pragma HLS STREAM variable=pyrS1.data depth=1 dim=1
 
 	xf::AXIvideo2xfMat<8, _TYPE, HEIGHT, WIDTH, _NPC1>(_pyrLA0, pyrLA0);

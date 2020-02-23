@@ -42,11 +42,12 @@
 
 // Í¼ÏñÈÚºÏ¶¥²ãº¯Êý
 // void blend(xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& srcA, xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& srcB, xf::Mat<_TYPE, HEIGHT, WIDTH, _NPC1>& dst);
-void addTop(
-		int _h,
-		int _w,
-		hls::stream<ap_axiu<8,1,1,1>>& _pyrS1Up,
+void blendTop(
+		hls::stream<ap_axiu<8,1,1,1>>& _pyrLA0,
+		hls::stream<ap_axiu<8,1,1,1>>& _pyrLA1,
+		hls::stream<ap_axiu<8,1,1,1>>& _pyrLB0,
+		hls::stream<ap_axiu<8,1,1,1>>& _pyrLB1,
 		hls::stream<ap_axiu<8,1,1,1>>& _pyrS0,
-		hls::stream<ap_axiu<8,1,1,1>>& _dst
+		hls::stream<ap_axiu<8,1,1,1>>& _pyrS1
 		);
 #endif

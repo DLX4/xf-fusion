@@ -153,12 +153,12 @@ void blendLaplacianPyramidsBorder(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageA, xf:
 template<int ROWS, int COLS>
 void blendLaplacianPyramidsByRE2(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageA, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageB, xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageS) {
 	// 均值滤波
-    double G[3][3] = {
+    float G[3][3] = {
         {0.1111, 0.1111, 0.1111},
         {0.1111, 0.1111, 0.1111},
         {0.1111, 0.1111, 0.1111}
     };
-    double matchDegreeLimit = 0.618;
+    float matchDegreeLimit = 0.618;
 
     int height = imageA.rows;
     int width = imageB.cols;
@@ -169,9 +169,9 @@ void blendLaplacianPyramidsByRE2(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageA, xf::
 #pragma HLS LOOP_TRIPCOUNT min=1 max=COLS
 #pragma HLS PIPELINE
         	// 3*3
-			double deltaA = 0.0;
-			double deltaB = 0.0;
-			double matchDegree = 0.0;
+        	float deltaA = 0.0;
+        	float deltaB = 0.0;
+			float matchDegree = 0.0;
 
 			for (int rowOffset = -1; rowOffset <= 1; rowOffset++) {
 #pragma HLS LOOP_TRIPCOUNT min=1 max=3
@@ -181,32 +181,32 @@ void blendLaplacianPyramidsByRE2(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageA, xf::
 					// 单通道
 					int x = i + rowOffset;
 					int y = j + colOffset;
-					int index = (int)x*width+y;
+					int index = (int)(x*width+y);
 
-					deltaA += G[1+rowOffset][1+colOffset] * imageA.data[index] * imageA.data[index];
-					deltaB += G[1+rowOffset][1+colOffset] * imageB.data[index] * imageB.data[index];
-					matchDegree += G[1+rowOffset][1+colOffset] * imageA.data[index] * imageB.data[index];
+					deltaA += G[1+rowOffset][1+colOffset] * imageA.read(index) * imageA.read(index);
+					deltaB += G[1+rowOffset][1+colOffset] * imageB.read(index) * imageB.read(index);
+					matchDegree += G[1+rowOffset][1+colOffset] * imageA.read(index) * imageB.read(index);
 				}
 			}
 			// 计算匹配度
 			matchDegree = matchDegree * matchDegree / (deltaA * deltaB);
 
-			int pix = (int)i*width+j;
+			int pix = (int)(i*width+j);
 			if (hls::isnan(matchDegree) || matchDegree < matchDegreeLimit) {
 				if (deltaA == deltaB) {
-					imageS.data[pix] = 0.5 * imageA.data[pix] + 0.5 * imageB.data[pix];
+					imageS.write(pix, (int)(0.5 * imageA.read(pix) + 0.5 * imageB.read(pix)));
 				} else if (deltaA > deltaB) {
-					imageS.data[pix] = imageA.data[pix];
+					imageS.write(pix, imageA.read(pix));
 				} else {
-					imageS.data[pix] = imageB.data[pix];
+					imageS.write(pix, imageB.read(pix));
 				}
 			} else {
-				double wMin = 0.5 * (1 - (1 - matchDegree)/(1 - matchDegreeLimit));
+				float wMin = 0.5 * (1 - (1 - matchDegree)/(1 - matchDegreeLimit));
 
-				int min = hls::min<int>(imageA.data[pix], imageB.data[pix]);
-				int max = hls::max<int>(imageA.data[pix], imageB.data[pix]);
-				double value = min * wMin + max * (1 - wMin);
-				imageS.data[pix] = (int)value;
+				int min = hls::min<int>(imageA.read(pix), imageB.read(pix));
+				int max = hls::max<int>(imageA.read(pix), imageB.read(pix));
+				float value = min * wMin + max * (1 - wMin);
+				imageS.write(pix, (int)value);
 			}
         }
     }
