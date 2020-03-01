@@ -11,8 +11,8 @@ void blendL(
 ) {
 #pragma HLS dataflow
 	// 分别融合图像AB各层拉普拉斯金字塔
-	fusion::blendLaplacianPyramidsByRE2<HEIGHT, WIDTH>(pyrLA0, pyrLB0, pyrS0);
-	fusion::blendLaplacianPyramidsByRE2<HEIGHT, WIDTH>(pyrLA1, pyrLB1, pyrS1);
+	fusion::blendOpt<HEIGHT, WIDTH>(pyrLA0, pyrLB0, pyrS0);
+	fusion::blendOpt<HEIGHT, WIDTH>(pyrLA1, pyrLB1, pyrS1);
 }
 
 void blendTop(

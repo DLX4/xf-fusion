@@ -212,6 +212,65 @@ void blendLaplacianPyramidsByRE2(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageA, xf::
     }
 }
 
+template<int ROWS, int COLS>
+void operatorOperator(
+		hls::stream< ap_uint<8> > &_srcA,
+		hls::stream< ap_uint<8> > &_srcB,
+		hls::stream< ap_uint<8> > &_dst,
+		uint16_t img_height, uint16_t img_width)
+{
+#pragma HLS INLINE
+	for (int i = 0; i < img_height; i++) {
+#pragma HLS LOOP_TRIPCOUNT min=1 max=ROWS
+		for (int j = 0; j < img_width; j++) {
+#pragma HLS LOOP_TRIPCOUNT min=1 max=COLS
+#pragma HLS PIPELINE II=1
+			ap_uint<8> res = (_srcA.read() + _srcB.read()) >> 1;
+			_dst.write(res);
+		}
+	}
+}
+
+// 优化版图像融合算法
+template<int ROWS, int COLS>
+void blendOpt(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageA,
+		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageB,
+		xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageS) {
+#pragma HLS DATAFLOW
+	hls::stream< ap_uint<8> > _imageA_in;
+	hls::stream< ap_uint<8> > _imageB_in;
+	hls::stream< ap_uint<8> > _imageS_out;
+	unsigned int read_pointer = 0;
+	for(int i=0; i < imageA.rows; i++)
+	{
+#pragma HLS LOOP_TRIPCOUNT min=1 max=ROWS
+		for(int j=0; j < imageA.cols; j++)
+		{
+#pragma HLS LOOP_TRIPCOUNT min=1 max=COLS
+#pragma HLS PIPELINE II=1
+			_imageA_in.write(imageA.read(read_pointer));
+			_imageB_in.write(imageB.read(read_pointer));
+			read_pointer++;
+		}
+	}
+	operatorOperator<ROWS, COLS>(_imageA_in, _imageB_in, _imageS_out, imageA.rows, imageA.cols);
+
+	unsigned int write_ptr = 0;
+	for(int i=0;i<imageA.rows;i++)
+	{
+#pragma HLS LOOP_TRIPCOUNT min=1 max=ROWS
+		for(int j=0;j<imageA.cols;j++)
+		{
+#pragma HLS LOOP_TRIPCOUNT min=1 max=COLS
+#pragma HLS PIPELINE II=1
+			ap_uint<8> read_fil_out = _imageS_out.read();
+			imageS.write(write_ptr,read_fil_out);
+			write_ptr++;
+		}
+	}
+	return;
+}
+
 // 通过源图像构造拉普拉斯金字塔
 template<int ROWS, int COLS>
 void lapPyrUpAddLevel(
