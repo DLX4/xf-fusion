@@ -99,26 +99,127 @@ void xFPyrDownApplykernel(
 			}
 		}
 ap_uint<32> out_pixel = 0;
-		int k[25]={1,  4,  6,  4, 1,
-		           4, 16, 24, 16, 4,
-				   6, 24, 36, 24, 6,
-				   4, 16, 24, 16, 4,
-				   1,  4,  6,  4, 1};
+ap_uint<32> deltaA = 0;
+ap_uint<32> deltaB = 0;
+ap_uint<32> deltaM = 0;
+//		int k[25]={1,  4,  6,  4, 1,
+//		           4, 16, 24, 16, 4,
+//				   6, 24, 36, 24, 6,
+//				   4, 16, 24, 16, 4,
+//				   1,  4,  6,  4, 1};
 		for(int i=0,k=0; i<PLANES;i++,k+=8)
 		{
-#pragma HLS PIPELINE II=1
-		out_pixel  = array[0*5 + 0].range(k+7,k) + array[0*5 + 4].range(k+7,k) + array[4*5 + 0].range(k+7,k) + array[4*5 + 4].range(k+7,k);
-		out_pixel += (array[0*5 + 1].range(k+7,k) + array[0*5 + 3].range(k+7,k) + array[1*5 + 0].range(k+7,k) + array[1*5 + 4].range(k+7,k)) << 2;
-		out_pixel += (array[4*5 + 1].range(k+7,k) + array[4*5 + 3].range(k+7,k) + array[3*5 + 0].range(k+7,k) + array[3*5 + 4].range(k+7,k)) << 2;
-		out_pixel += (array[0*5 + 2].range(k+7,k) + array[2*5 + 0].range(k+7,k) + array[2*5 + 4].range(k+7,k) + array[4*5 + 2].range(k+7,k)) << 2;
-		out_pixel += (array[0*5 + 2].range(k+7,k) + array[2*5 + 0].range(k+7,k) + array[2*5 + 4].range(k+7,k) + array[4*5 + 2].range(k+7,k)) << 1;
-		out_pixel += (array[1*5 + 1].range(k+7,k) + array[1*5 + 3].range(k+7,k) + array[3*5 + 1].range(k+7,k) + array[3*5 + 3].range(k+7,k)) << 4;
-		out_pixel += (array[1*5 + 2].range(k+7,k) + array[2*5 + 1].range(k+7,k) + array[2*5 + 3].range(k+7,k) + array[3*5 + 2].range(k+7,k)) << 4;
-		out_pixel += (array[1*5 + 2].range(k+7,k) + array[2*5 + 1].range(k+7,k) + array[2*5 + 3].range(k+7,k) + array[3*5 + 2].range(k+7,k)) << 3;
-		out_pixel += (array[2*5 + 2].range(k+7,k)) << 5;
-		out_pixel += (array[2*5 + 2].range(k+7,k)) << 2;
-
-		OutputValues[0].range(k+7,k) = (unsigned char)( (out_pixel + 128) >> 8);
+#pragma HLS PIPELINE
+//			deltaA += array_A[ 0] * array_A[0];
+//			deltaA += array_A[ 1] * array_A[1];
+//			deltaA += array_A[ 2] * array_A[2];
+//			deltaA += array_A[ 3] * array_A[3];
+//			deltaA += array_A[ 4] * array_A[4];
+//			deltaA += array_A[ 5] * array_A[5];
+//			deltaA += array_A[ 6] * array_A[6];
+//			deltaA += array_A[ 7] * array_A[7];
+//			deltaA += array_A[ 8] * array_A[8];
+//			deltaA += array_A[ 9] * array_A[9];
+//			deltaA += array_A[10] * array_A[10];
+//			deltaA += array_A[11] * array_A[11];
+//			deltaA += array_A[12] * array_A[12];
+//			deltaA += array_A[13] * array_A[13];
+//			deltaA += array_A[14] * array_A[14];
+//			deltaA += array_A[15] * array_A[15];
+//			deltaA += array_A[16] * array_A[16];
+//			deltaA += array_A[17] * array_A[17];
+//			deltaA += array_A[18] * array_A[18];
+//			deltaA += array_A[19] * array_A[19];
+//			deltaA += array_A[20] * array_A[20];
+//			deltaA += array_A[21] * array_A[21];
+//			deltaA += array_A[22] * array_A[22];
+//			deltaA += array_A[23] * array_A[23];
+//			deltaA += array_A[24] * array_A[24];
+//
+//			deltaB += array_B[ 0] * array_B[0];
+//			deltaB += array_B[ 1] * array_B[1];
+//			deltaB += array_B[ 2] * array_B[2];
+//			deltaB += array_B[ 3] * array_B[3];
+//			deltaB += array_B[ 4] * array_B[4];
+//			deltaB += array_B[ 5] * array_B[5];
+//			deltaB += array_B[ 6] * array_B[6];
+//			deltaB += array_B[ 7] * array_B[7];
+//			deltaB += array_B[ 8] * array_B[8];
+//			deltaB += array_B[ 9] * array_B[9];
+//			deltaB += array_B[10] * array_B[10];
+//			deltaB += array_B[11] * array_B[11];
+//			deltaB += array_B[12] * array_B[12];
+//			deltaB += array_B[13] * array_B[13];
+//			deltaB += array_B[14] * array_B[14];
+//			deltaB += array_B[15] * array_B[15];
+//			deltaB += array_B[16] * array_B[16];
+//			deltaB += array_B[17] * array_B[17];
+//			deltaB += array_B[18] * array_B[18];
+//			deltaB += array_B[19] * array_B[19];
+//			deltaB += array_B[20] * array_B[20];
+//			deltaB += array_B[21] * array_B[21];
+//			deltaB += array_B[22] * array_B[22];
+//			deltaB += array_B[23] * array_B[23];
+//			deltaB += array_B[24] * array_B[24];
+//
+//			deltaM += array_A[ 0] * array_B[0];
+//			deltaM += array_A[ 1] * array_B[1];
+//			deltaM += array_A[ 2] * array_B[2];
+//			deltaM += array_A[ 3] * array_B[3];
+//			deltaM += array_A[ 4] * array_B[4];
+//			deltaM += array_A[ 5] * array_B[5];
+//			deltaM += array_A[ 6] * array_B[6];
+//			deltaM += array_A[ 7] * array_B[7];
+//			deltaM += array_A[ 8] * array_B[8];
+//			deltaM += array_A[ 9] * array_B[9];
+//			deltaM += array_A[10] * array_B[10];
+//			deltaM += array_A[11] * array_B[11];
+//			deltaM += array_A[12] * array_B[12];
+//			deltaM += array_A[13] * array_B[13];
+//			deltaM += array_A[14] * array_B[14];
+//			deltaM += array_A[15] * array_B[15];
+//			deltaM += array_A[16] * array_B[16];
+//			deltaM += array_A[17] * array_B[17];
+//			deltaM += array_A[18] * array_B[18];
+//			deltaM += array_A[19] * array_B[19];
+//			deltaM += array_A[20] * array_B[20];
+//			deltaM += array_A[21] * array_B[21];
+//			deltaM += array_A[22] * array_B[22];
+//			deltaM += array_A[23] * array_B[23];
+//			deltaM += array_A[24] * array_B[24];
+//
+//			// ¼ÆËãÆ¥Åä¶È
+//
+//			if (deltaA == 0 || deltaB == 0) {
+//				if (deltaA == deltaB) {
+//					out_pixel = (array_A[12] + array_B[12]) >> 1;
+//				} else if (deltaA > deltaB) {
+//					out_pixel = array_A[12];
+//				} else {
+//					out_pixel = array_B[12];
+//				}
+//			} else {
+//				float matchDegree = deltaM * deltaM / (deltaA * deltaB);
+//				if (matchDegree < 0.6) {
+//					if (deltaA == deltaB) {
+//						out_pixel = (array_A[12] + array_B[12]) >> 1;
+//					} else if (deltaA > deltaB) {
+//						out_pixel = array_A[12];
+//					} else {
+//						out_pixel = array_B[12];
+//					}
+//				} else {
+//					float wMin = 0.5 * (1 - (1 - matchDegree)*2.5);
+//
+//					int min = hls::min<int>(array_A[12], array_B[12]);
+//					int max = hls::max<int>(array_A[12], array_B[12]);
+//					float value = min * wMin + max * (1 - wMin);
+//					out_pixel = (unsigned char)value;
+//				}
+//			}
+//
+//			OutputValues[0].range(k+7,k) = (unsigned char)( out_pixel);
+			OutputValues[0].range(k+7,k) = (unsigned char)( array_A[12]);
 		}
 		return;
 }
@@ -190,7 +291,7 @@ void xFPyrDownprocessgaussian(hls::stream< XF_TNAME(DEPTH,NPC) > & _src_mat_A,
 			}
 		}
 
-		xFPyrDownApplykernel<NPC, DEPTH, WIN_SZ, WIN_SZ_SQ,PLANES>(OutputValues,src_buf_A,src_buf_B, win_size);
+		fusion::xFPyrDownApplykernel<NPC, DEPTH, WIN_SZ, WIN_SZ_SQ,PLANES>(OutputValues,src_buf_A,src_buf_B, win_size);
 		if(col >= (win_size>>1))
 		{
 			_out_mat.write(OutputValues[0]);
@@ -294,7 +395,7 @@ void xf_pyrdown_gaussian_nxn(
 	{
 #pragma HLS LOOP_TRIPCOUNT min=1 max=ROWS
 		P0 = 0;
-		xFPyrDownprocessgaussian<ROWS, COLS, DEPTH, NPC, WORDWIDTH, TC, WIN_SZ, WIN_SZ_SQ,PLANES>(_src_mat_A, _src_mat_B, _out_mat, buf_A, src_buf_A, buf_B, src_buf_B, OutputValues, P0, img_width, img_height, shift_x, row_ind, row,win_size);
+		fusion::xFPyrDownprocessgaussian<ROWS, COLS, DEPTH, NPC, WORDWIDTH, TC, WIN_SZ, WIN_SZ_SQ,PLANES>(_src_mat_A, _src_mat_B, _out_mat, buf_A, src_buf_A, buf_B, src_buf_B, OutputValues, P0, img_width, img_height, shift_x, row_ind, row,win_size);
 
 		//update indices
 		ap_uint<13> zero_ind = row_ind[0];
@@ -322,7 +423,7 @@ void xFPyrDownGaussianBlur(
 
 	imgwidth = imgwidth >> XF_BITSHIFT(NPC);
 
-	xf_pyrdown_gaussian_nxn<ROWS,COLS,DEPTH,NPC,WORDWIDTH,(COLS>>XF_BITSHIFT(NPC))+(WIN_SZ>>1),WIN_SZ, WIN_SZ_SQ,PLANES>(_src_A,_src_B, _dst,WIN_SZ,imgheight,imgwidth);
+	fusion::xf_pyrdown_gaussian_nxn<ROWS,COLS,DEPTH,NPC,WORDWIDTH,(COLS>>XF_BITSHIFT(NPC))+(WIN_SZ>>1),WIN_SZ, WIN_SZ_SQ,PLANES>(_src_A,_src_B, _dst,WIN_SZ,imgheight,imgwidth);
 
 }
 
@@ -368,7 +469,9 @@ void blendOpt(xf::Mat<_TYPE, ROWS, COLS, _NPC1>& imageA,
 			read_pointer++;
 		}
 	}
-	blendOperator<ROWS, COLS>(_imageA_in, _imageB_in, _imageS_out, imageA.rows, imageA.cols);
+	//blendOperator<ROWS, COLS>(_imageA_in, _imageB_in, _imageS_out, imageA.rows, imageA.cols);
+
+	fusion::xFPyrDownGaussianBlur<ROWS,COLS,_TYPE, _NPC1, XF_WORDWIDTH(_TYPE,_NPC1), 0,5,25, XF_CHANNELS(_TYPE,_NPC1)>(_imageA_in, _imageB_in, _imageS_out, 5, XF_BORDER_CONSTANT,imageA.rows,imageA.cols);
 
 	unsigned int write_ptr = 0;
 	for(int i=0;i<imageA.rows;i++)
