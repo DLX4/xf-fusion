@@ -110,116 +110,118 @@ ap_uint<32> deltaM = 0;
 		for(int i=0,k=0; i<PLANES;i++,k+=8)
 		{
 #pragma HLS PIPELINE
-//			deltaA += array_A[ 0] * array_A[0];
-//			deltaA += array_A[ 1] * array_A[1];
-//			deltaA += array_A[ 2] * array_A[2];
-//			deltaA += array_A[ 3] * array_A[3];
-//			deltaA += array_A[ 4] * array_A[4];
-//			deltaA += array_A[ 5] * array_A[5];
-//			deltaA += array_A[ 6] * array_A[6];
-//			deltaA += array_A[ 7] * array_A[7];
-//			deltaA += array_A[ 8] * array_A[8];
-//			deltaA += array_A[ 9] * array_A[9];
-//			deltaA += array_A[10] * array_A[10];
-//			deltaA += array_A[11] * array_A[11];
-//			deltaA += array_A[12] * array_A[12];
-//			deltaA += array_A[13] * array_A[13];
-//			deltaA += array_A[14] * array_A[14];
-//			deltaA += array_A[15] * array_A[15];
-//			deltaA += array_A[16] * array_A[16];
-//			deltaA += array_A[17] * array_A[17];
-//			deltaA += array_A[18] * array_A[18];
-//			deltaA += array_A[19] * array_A[19];
-//			deltaA += array_A[20] * array_A[20];
-//			deltaA += array_A[21] * array_A[21];
-//			deltaA += array_A[22] * array_A[22];
-//			deltaA += array_A[23] * array_A[23];
-//			deltaA += array_A[24] * array_A[24];
-//
-//			deltaB += array_B[ 0] * array_B[0];
-//			deltaB += array_B[ 1] * array_B[1];
-//			deltaB += array_B[ 2] * array_B[2];
-//			deltaB += array_B[ 3] * array_B[3];
-//			deltaB += array_B[ 4] * array_B[4];
-//			deltaB += array_B[ 5] * array_B[5];
-//			deltaB += array_B[ 6] * array_B[6];
-//			deltaB += array_B[ 7] * array_B[7];
-//			deltaB += array_B[ 8] * array_B[8];
-//			deltaB += array_B[ 9] * array_B[9];
-//			deltaB += array_B[10] * array_B[10];
-//			deltaB += array_B[11] * array_B[11];
-//			deltaB += array_B[12] * array_B[12];
-//			deltaB += array_B[13] * array_B[13];
-//			deltaB += array_B[14] * array_B[14];
-//			deltaB += array_B[15] * array_B[15];
-//			deltaB += array_B[16] * array_B[16];
-//			deltaB += array_B[17] * array_B[17];
-//			deltaB += array_B[18] * array_B[18];
-//			deltaB += array_B[19] * array_B[19];
-//			deltaB += array_B[20] * array_B[20];
-//			deltaB += array_B[21] * array_B[21];
-//			deltaB += array_B[22] * array_B[22];
-//			deltaB += array_B[23] * array_B[23];
-//			deltaB += array_B[24] * array_B[24];
-//
-//			deltaM += array_A[ 0] * array_B[0];
-//			deltaM += array_A[ 1] * array_B[1];
-//			deltaM += array_A[ 2] * array_B[2];
-//			deltaM += array_A[ 3] * array_B[3];
-//			deltaM += array_A[ 4] * array_B[4];
-//			deltaM += array_A[ 5] * array_B[5];
-//			deltaM += array_A[ 6] * array_B[6];
-//			deltaM += array_A[ 7] * array_B[7];
-//			deltaM += array_A[ 8] * array_B[8];
-//			deltaM += array_A[ 9] * array_B[9];
-//			deltaM += array_A[10] * array_B[10];
-//			deltaM += array_A[11] * array_B[11];
-//			deltaM += array_A[12] * array_B[12];
-//			deltaM += array_A[13] * array_B[13];
-//			deltaM += array_A[14] * array_B[14];
-//			deltaM += array_A[15] * array_B[15];
-//			deltaM += array_A[16] * array_B[16];
-//			deltaM += array_A[17] * array_B[17];
-//			deltaM += array_A[18] * array_B[18];
-//			deltaM += array_A[19] * array_B[19];
-//			deltaM += array_A[20] * array_B[20];
-//			deltaM += array_A[21] * array_B[21];
-//			deltaM += array_A[22] * array_B[22];
-//			deltaM += array_A[23] * array_B[23];
-//			deltaM += array_A[24] * array_B[24];
-//
-//			// ¼ÆËãÆ¥Åä¶È
-//
-//			if (deltaA == 0 || deltaB == 0) {
-//				if (deltaA == deltaB) {
-//					out_pixel = (array_A[12] + array_B[12]) >> 1;
-//				} else if (deltaA > deltaB) {
-//					out_pixel = array_A[12];
-//				} else {
-//					out_pixel = array_B[12];
-//				}
-//			} else {
-//				float matchDegree = deltaM * deltaM / (deltaA * deltaB);
-//				if (matchDegree < 0.6) {
-//					if (deltaA == deltaB) {
-//						out_pixel = (array_A[12] + array_B[12]) >> 1;
-//					} else if (deltaA > deltaB) {
-//						out_pixel = array_A[12];
-//					} else {
-//						out_pixel = array_B[12];
-//					}
-//				} else {
-//					float wMin = 0.5 * (1 - (1 - matchDegree)*2.5);
-//
-//					int min = hls::min<int>(array_A[12], array_B[12]);
-//					int max = hls::max<int>(array_A[12], array_B[12]);
-//					float value = min * wMin + max * (1 - wMin);
-//					out_pixel = (unsigned char)value;
-//				}
-//			}
-//
-//			OutputValues[0].range(k+7,k) = (unsigned char)( out_pixel);
-			OutputValues[0].range(k+7,k) = (unsigned char)( array_A[12]);
+			deltaA += array_A[ 0] * array_A[0];
+			deltaA += array_A[ 1] * array_A[1];
+			deltaA += array_A[ 2] * array_A[2];
+			deltaA += array_A[ 3] * array_A[3];
+			deltaA += array_A[ 4] * array_A[4];
+			deltaA += array_A[ 5] * array_A[5];
+			deltaA += array_A[ 6] * array_A[6];
+			deltaA += array_A[ 7] * array_A[7];
+			deltaA += array_A[ 8] * array_A[8];
+			deltaA += array_A[ 9] * array_A[9];
+			deltaA += array_A[10] * array_A[10];
+			deltaA += array_A[11] * array_A[11];
+			deltaA += array_A[12] * array_A[12];
+			deltaA += array_A[13] * array_A[13];
+			deltaA += array_A[14] * array_A[14];
+			deltaA += array_A[15] * array_A[15];
+			deltaA += array_A[16] * array_A[16];
+			deltaA += array_A[17] * array_A[17];
+			deltaA += array_A[18] * array_A[18];
+			deltaA += array_A[19] * array_A[19];
+			deltaA += array_A[20] * array_A[20];
+			deltaA += array_A[21] * array_A[21];
+			deltaA += array_A[22] * array_A[22];
+			deltaA += array_A[23] * array_A[23];
+			deltaA += array_A[24] * array_A[24];
+
+			deltaB += array_B[ 0] * array_B[0];
+			deltaB += array_B[ 1] * array_B[1];
+			deltaB += array_B[ 2] * array_B[2];
+			deltaB += array_B[ 3] * array_B[3];
+			deltaB += array_B[ 4] * array_B[4];
+			deltaB += array_B[ 5] * array_B[5];
+			deltaB += array_B[ 6] * array_B[6];
+			deltaB += array_B[ 7] * array_B[7];
+			deltaB += array_B[ 8] * array_B[8];
+			deltaB += array_B[ 9] * array_B[9];
+			deltaB += array_B[10] * array_B[10];
+			deltaB += array_B[11] * array_B[11];
+			deltaB += array_B[12] * array_B[12];
+			deltaB += array_B[13] * array_B[13];
+			deltaB += array_B[14] * array_B[14];
+			deltaB += array_B[15] * array_B[15];
+			deltaB += array_B[16] * array_B[16];
+			deltaB += array_B[17] * array_B[17];
+			deltaB += array_B[18] * array_B[18];
+			deltaB += array_B[19] * array_B[19];
+			deltaB += array_B[20] * array_B[20];
+			deltaB += array_B[21] * array_B[21];
+			deltaB += array_B[22] * array_B[22];
+			deltaB += array_B[23] * array_B[23];
+			deltaB += array_B[24] * array_B[24];
+
+			deltaM += array_A[ 0] * array_B[0];
+			deltaM += array_A[ 1] * array_B[1];
+			deltaM += array_A[ 2] * array_B[2];
+			deltaM += array_A[ 3] * array_B[3];
+			deltaM += array_A[ 4] * array_B[4];
+			deltaM += array_A[ 5] * array_B[5];
+			deltaM += array_A[ 6] * array_B[6];
+			deltaM += array_A[ 7] * array_B[7];
+			deltaM += array_A[ 8] * array_B[8];
+			deltaM += array_A[ 9] * array_B[9];
+			deltaM += array_A[10] * array_B[10];
+			deltaM += array_A[11] * array_B[11];
+			deltaM += array_A[12] * array_B[12];
+			deltaM += array_A[13] * array_B[13];
+			deltaM += array_A[14] * array_B[14];
+			deltaM += array_A[15] * array_B[15];
+			deltaM += array_A[16] * array_B[16];
+			deltaM += array_A[17] * array_B[17];
+			deltaM += array_A[18] * array_B[18];
+			deltaM += array_A[19] * array_B[19];
+			deltaM += array_A[20] * array_B[20];
+			deltaM += array_A[21] * array_B[21];
+			deltaM += array_A[22] * array_B[22];
+			deltaM += array_A[23] * array_B[23];
+			deltaM += array_A[24] * array_B[24];
+
+			std::cout << "deltaA= " << deltaA << "; deltaB= " << deltaB << "; deltaM= " << deltaM << std::endl;
+			// ¼ÆËãÆ¥Åä¶È
+
+			if (deltaA == 0 || deltaB == 0) {
+				if (deltaA == deltaB) {
+					out_pixel = (array_A[12] + array_B[12]) >> 1;
+				} else if (deltaA > deltaB) {
+					out_pixel = array_A[12];
+				} else {
+					out_pixel = array_B[12];
+				}
+			} else {
+				float matchDegree = (float)deltaM * deltaM / (deltaA * deltaB);
+				std::cout << "matchDegree= " << matchDegree << std::endl;
+				if (matchDegree < 0.6) {
+					if (deltaA == deltaB) {
+						out_pixel = (array_A[12] + array_B[12]) >> 1;
+					} else if (deltaA > deltaB) {
+						out_pixel = array_A[12];
+					} else {
+						out_pixel = array_B[12];
+					}
+				} else {
+					float wMin = 0.5 * (1 - (1 - matchDegree)*2.5);
+
+					int min = hls::min<int>(array_A[12], array_B[12]);
+					int max = hls::max<int>(array_A[12], array_B[12]);
+					float value = min * wMin + max * (1 - wMin);
+					out_pixel = (unsigned char)value;
+				}
+			}
+
+			OutputValues[0].range(k+7,k) = (unsigned char)( out_pixel);
+			// OutputValues[0].range(k+7,k) = (unsigned char)( (array_A[12] + array_B[12]) >> 1);
 		}
 		return;
 }

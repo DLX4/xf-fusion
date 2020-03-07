@@ -37,4 +37,5 @@ int main (int argc, char** argv)
 	AXIvideo2cvMatxf<_NPC1, 8>(_dst1, dst1);
 
 	cv::imwrite("_dst0.jpg", dst0);
+	cv::imwrite("_dst1.jpg", dst1);
 }

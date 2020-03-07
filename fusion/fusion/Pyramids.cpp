@@ -292,8 +292,8 @@ void blend(Mat& srcA, Mat& srcB, Mat& dst) {
 
 int main() {
     // 图像长宽被16整除 灰度图（如果不是需要cvtColor(image, gray, CV_RGB2GRAY);）
-    Mat srcA_RGB = imread(AVATAR1_PATH);
-    Mat srcB_RGB = imread(AVATAR2_PATH);
+    Mat srcA_RGB = imread(IMG31_PATH);
+    Mat srcB_RGB = imread(IMG32_PATH);
 
     Mat srcA;
     Mat srcB;
