@@ -83,7 +83,7 @@ void SalientRegionDetectionBasedonFT(Mat &src, Mat &dst, Mat &sal){
         }
     }
     // imshow("sal",sal);
-    // waitKey(0);
+    waitKey(0);
 }
 
 // 将mat输出到文件，便于调试
