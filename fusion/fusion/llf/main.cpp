@@ -32,8 +32,8 @@ void OutputBinaryImage(const std::string& filename, cv::Mat image) {
 //  beta     Slope for edge remapping function (< 1 for tone mapping, > 1 for
 //           inverse tone mapping)
 //  sigma_r  Edge threshold (in image range space).
-
-cv::Mat FasterLocalLaplacianFilter(const cv::Mat& input,
+template<typename T>
+cv::Mat LocalLaplacianFilter(const cv::Mat& input,
                              double alpha,
                              double beta,
                              double sigma_r) {
@@ -47,60 +47,55 @@ cv::Mat FasterLocalLaplacianFilter(const cv::Mat& input,
 
   GaussianPyramid gauss_input(input, num_levels);
 
-  cv::Mat input_int = input * 255;
-  GaussianPyramid gauss_input_int(input_int, num_levels);
-
   // Construct the unfilled Laplacian pyramid of the output. Copy the residual
   // over from the top of the Gaussian pyramid.
   LaplacianPyramid output(kRows, kCols, input.channels(), num_levels);
   gauss_input[num_levels].copyTo(output[num_levels]);
 
-  for (int M = 0; M < 256; M++) {
-      cout << ">>[0]" << M << endl;
-      // Remap the region around the current pixel.
-      cv::Mat r0;
-      input.copyTo(r0);
-      cv::Mat remapped;
-      r.Evaluate<cv::Vec3d>(r0, remapped, (double)M/255, sigma_r);
-      cout << ">>[1]" << M << endl;
-      // Construct the Laplacian pyramid for the remapped region and copy the
-      // coefficient over to the ouptut Laplacian pyramid.
-      LaplacianPyramid tmp_pyr(remapped, num_levels + 1);
-
-      cout << ">>[2]" << M << endl;
-      // Calculate each level of the ouput Laplacian pyramid.
-      for (int l = 0; l < num_levels; l++) {
-
-        for (int y = 0; y < output[l].rows; y++) {
-
-          for (int x = 0; x < output[l].cols; x++) {
-
-            if ((gauss_input_int[l].at<cv::Vec3b>(y, x))[0] == M) {
-                output.at<cv::Vec3d>(l, y, x)[0] = tmp_pyr.at<cv::Vec3d>(l, y, x)[0];
-            }
-
-            if ((gauss_input_int[l].at<cv::Vec3b>(y, x))[1] == M) {
-                output.at<cv::Vec3d>(l, y, x)[1] = tmp_pyr.at<cv::Vec3d>(l, y, x)[1];
-            }
-
-            if ((gauss_input_int[l].at<cv::Vec3b>(y, x))[2] == M) {
-                output.at<cv::Vec3d>(l, y, x)[2] = tmp_pyr.at<cv::Vec3d>(l, y, x)[2];
-            }
-
-          }
-
-        }
-
-      }
-
-      cout << "<" << M << endl;
-  }
-
+  // Calculate each level of the ouput Laplacian pyramid.
   for (int l = 0; l < num_levels; l++) {
-      stringstream ss;
-      ss << "level" << l << ".png";
-      cv::imwrite(ss.str(), ByteScale(cv::abs(output[l])));
-      cout << endl;
+    int subregion_size = 3 * ((1 << (l + 2)) - 1);
+    int subregion_r = subregion_size / 2;
+
+    for (int y = 0; y < output[l].rows; y++) {
+      // Calculate the y-bounds of the region in the full-res image.
+      int full_res_y = (1 << l) * y;
+      int roi_y0 = full_res_y - subregion_r;
+      int roi_y1 = full_res_y + subregion_r + 1;
+      cv::Range row_range(max(0, roi_y0), min(roi_y1, kRows));
+      int full_res_roi_y = full_res_y - row_range.start;
+
+      for (int x = 0; x < output[l].cols; x++) {
+        // Calculate the x-bounds of the region in the full-res image.
+        int full_res_x = (1 << l) * x;
+        int roi_x0 = full_res_x - subregion_r;
+        int roi_x1 = full_res_x + subregion_r + 1;
+        cv::Range col_range(max(0, roi_x0), min(roi_x1, kCols));
+        int full_res_roi_x = full_res_x - col_range.start;
+
+        // Remap the region around the current pixel.
+        cv::Mat r0 = input(row_range, col_range);
+        cv::Mat remapped;
+        r.Evaluate<T>(r0, remapped, gauss_input[l].at<T>(y, x), sigma_r);
+
+        // Construct the Laplacian pyramid for the remapped region and copy the
+        // coefficient over to the ouptut Laplacian pyramid.
+        LaplacianPyramid tmp_pyr(remapped, l + 1,
+            {row_range.start, row_range.end - 1,
+             col_range.start, col_range.end - 1});
+        output.at<T>(l, y, x) = tmp_pyr.at<T>(l, full_res_roi_y >> l,
+                                                 full_res_roi_x >> l);
+      }
+      cout << "Level " << (l+1) << " (" << output[l].rows << " x "
+           << output[l].cols << "), footprint: " << subregion_size << "x"
+           << subregion_size << " ... " << round(100.0 * y / output[l].rows)
+           << "%\r";
+      cout.flush();
+    }
+    stringstream ss;
+    ss << "level" << l << ".png";
+    cv::imwrite(ss.str(), ByteScale(cv::abs(output[l])));
+    cout << endl;
   }
 
   return output.Reconstruct();
@@ -130,9 +125,9 @@ int main(int argc, char** argv) {
 
   cv::Mat output;
   if (input.channels() == 1) {
-    // output = LocalLaplacianFilter<double>(input, kAlpha, kBeta, kSigmaR);
+    output = LocalLaplacianFilter<double>(input, kAlpha, kBeta, kSigmaR);
   } else if (input.channels() == 3) {
-    output = FasterLocalLaplacianFilter(input, kAlpha, kBeta, kSigmaR);
+    output = LocalLaplacianFilter<cv::Vec3d>(input, kAlpha, kBeta, kSigmaR);
   } else {
     cerr << "Input image must have 1 or 3 channels." << endl;
     return 1;
