@@ -39,9 +39,18 @@ LIBS +=  D:\opencv24\opencv24-qt5\lib\libopencv_calib3d2411.dll.a \
         D:\opencv24\opencv24-qt5\lib\libopencv_videostab2411.dll.a \
 
 SOURCES += \
-    Pyramids.cpp
+    Pyramids.cpp \
+    llf/gaussian_pyramid.cpp \
+    llf/laplacian_pyramid.cpp \
+    llf/main.cpp \
+    llf/opencv_utils.cpp \
+    llf/remapping_function.cpp
 
-HEADERS +=
+HEADERS += \
+    llf/gaussian_pyramid.h \
+    llf/laplacian_pyramid.h \
+    llf/opencv_utils.h \
+    llf/remapping_function.h
 
 FORMS += \
     mainwindow.ui

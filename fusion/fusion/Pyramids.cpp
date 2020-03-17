@@ -30,6 +30,62 @@ using namespace cv;
 
 #define FLIR_00001_1 "..\\image\\FLIR_video_00001.jpg"
 #define FLIR_00001_2 "..\\image\\FLIR_video_00001.jpeg"
+
+void SalientRegionDetectionBasedonFT(Mat &src, Mat &dst, Mat &sal){
+    Mat Lab;
+    cvtColor(src, Lab, CV_BGR2Lab);
+
+    int row=src.rows,col=src.cols;
+
+    int Sal_org[row][col];
+    memset(Sal_org,0,sizeof(Sal_org));
+
+    Point3_<uchar>* p;
+
+    int MeanL=0,Meana=0,Meanb=0;
+    for (int i=0;i<row;i++){
+        for (int j=0;j<col;j++){
+            p=Lab.ptr<Point3_<uchar> > (i,j);
+            MeanL+=p->x;
+            Meana+=p->y;
+            Meanb+=p->z;
+        }
+    }
+    MeanL/=(row*col);
+    Meana/=(row*col);
+    Meanb/=(row*col);
+
+    GaussianBlur(Lab,Lab,Size(3,3),0,0);
+
+    int val;
+
+    int max_v=0;
+    int min_v=1<<28;
+
+    for (int i=0;i<row;i++){
+        for (int j=0;j<col;j++){
+            p=Lab.ptr<Point3_<uchar> > (i,j);
+            val=sqrt( (MeanL - p->x)*(MeanL - p->x)+ (p->y - Meana)*(p->y-Meana) + (p->z - Meanb)*(p->z - Meanb) );
+            Sal_org[i][j]=val;
+            max_v=max(max_v,val);
+            min_v=min(min_v,val);
+        }
+    }
+
+    cout<<max_v<<" "<<min_v<<endl;
+    int X,Y;
+    for (Y = 0; Y < row; Y++)
+    {
+        for (X = 0; X < col; X++)
+        {
+            dst.at<float>(Y,X) = (float)(Sal_org[Y][X] - min_v)*1/(max_v - min_v);
+            sal.at<uchar>(Y,X) = (Sal_org[Y][X] - min_v)*255/(max_v - min_v);
+        }
+    }
+    // imshow("sal",sal);
+    // waitKey(0);
+}
+
 // 将mat输出到文件，便于调试
 void writeMatToFile(Mat& m, const char* filename) {
     ofstream fout(filename);
@@ -41,7 +97,7 @@ void writeMatToFile(Mat& m, const char* filename) {
 
     for (int i = 0; i < m.rows; i++) {
         for (int j = 0; j < m.cols; j++) {
-            fout << m.at<Vec3b>(i, j) << "\t";
+            fout << m.at<float>(i, j) << "\t";
         }
         fout << std::endl;
     }
@@ -322,7 +378,7 @@ void msr(Mat& img, Mat& dst, const vector<double>& sigmas) {
 
 using LapPyr = vector<Mat>;
 // 通过源图像构造拉普拉斯金字塔
-void buildLaplacianPyramids(Mat& src, LapPyr& pyr, int octvs=5) {
+void buildLaplacianPyramids(Mat& src, LapPyr& pyr, int octvs=3) {
     // pyr[0~N]构成了拉普拉斯金字塔
     // 第N层（最后一层）拉普拉斯金字塔同高斯金字塔
     pyr.clear();
@@ -524,6 +580,164 @@ void blendLaplacianPyramidsByBrightness(Mat& imageA, Mat& imageB, Mat& imageS) {
     }
 }
 
+// 顶层融合策略: 边缘、显著性增强
+void blendLaplacianPyramidsByHVS(Mat& imageA, Mat& imageB, Mat& imageS) {
+
+    Mat imageA_sal = Mat::zeros(imageA.size(),CV_32FC1 );
+    Mat imageB_sal = Mat::zeros(imageB.size(),CV_32FC1 );
+
+    Mat imageA_sal_gray = Mat::zeros(imageA.size(),CV_8UC1 );
+    Mat imageB_sal_gray = Mat::zeros(imageB.size(),CV_8UC1 );
+
+    SalientRegionDetectionBasedonFT(imageA, imageA_sal, imageA_sal_gray);
+    SalientRegionDetectionBasedonFT(imageB, imageB_sal, imageB_sal_gray);
+
+    // 均值滤波
+    double G[3][3] = {
+        {0.1111, 0.1111, 0.1111},
+        {0.1111, 0.1111, 0.1111},
+        {0.1111, 0.1111, 0.1111}
+    };
+    double matchDegreeLimit = 0.1;
+
+    int height = imageA.rows;
+    int width = imageB.cols;
+
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+
+            // 不检查边界
+            if ((i > 1) && (i < (height - 2)) && (j > 1) && (j < (width - 2))) {
+                // 3*3
+                double deltaA[3] = {0.0};
+                double deltaB[3] = {0.0};
+                for (int rowOffset = -1; rowOffset <= 1; rowOffset++) {
+                    for (int colOffset= -1; colOffset <= 1; colOffset++) {
+                        for (int rgb = 0; rgb < 3; rgb++) {
+                            int x = i + rowOffset;
+                            int y = j + colOffset;
+
+                            deltaA[rgb] += G[1+rowOffset][1+colOffset] * imageA_sal.at<float>(x, y);
+                            deltaB[rgb] += G[1+rowOffset][1+colOffset] * imageB_sal.at<float>(x, y);
+                        }
+                    }
+                }
+
+//                for (int rgb = 0; rgb < 3; rgb++) {
+//                    std::cout << 666 << std::endl;
+//                    std::cout << fabs(deltaA[rgb] - deltaB[rgb]) << std::endl;
+//                    if (fabs(deltaA[rgb] - deltaB[rgb])  > matchDegreeLimit) {
+//                        if (deltaA[rgb] == deltaB[rgb]) {
+//                            imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
+//                        } else if (deltaA[rgb] > deltaB[rgb]) {
+//                            imageS.at<Vec3b>(i, j)[rgb] = imageA.at<Vec3b>(i, j)[rgb];
+//                        } else {
+//                            imageS.at<Vec3b>(i, j)[rgb] = imageB.at<Vec3b>(i, j)[rgb];
+//                        }
+//                    } else {
+//                        double alpha = deltaA[rgb] / deltaA[rgb] + deltaB[rgb];
+//                        imageS.at<Vec3b>(i, j)[rgb] = alpha * imageA.at<Vec3b>(i, j)[rgb] + (1 - alpha) * imageB.at<Vec3b>(i, j)[rgb];
+//                    }
+//                }
+                for (int rgb = 0; rgb < 3; rgb++) {
+//                    std::cout << 666 << std::endl;
+//                    std::cout << fabs(deltaA[rgb] - deltaB[rgb]) << std::endl;
+//                    if (fabs(imageA_sal.at<float>(i, j) - imageA_sal.at<float>(i, j))  > matchDegreeLimit) {
+//                        if (deltaA[rgb] == deltaB[rgb]) {
+//                            imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
+//                        } else if (deltaA[rgb] > deltaB[rgb]) {
+//                            imageS.at<Vec3b>(i, j)[rgb] = (unsigned char)fmax(imageA.at<Vec3b>(i, j)[rgb], 255 * deltaA[rgb]);
+//                        } else {
+//                            imageS.at<Vec3b>(i, j)[rgb] = (unsigned char)fmax(imageB.at<Vec3b>(i, j)[rgb], 255 * deltaB[rgb]);
+//                        }
+//                    } else {
+                        double alpha = deltaA[rgb] / deltaA[rgb] + deltaB[rgb];
+                        imageS.at<Vec3b>(i, j)[rgb] = alpha * fmax(imageA.at<Vec3b>(i, j)[rgb], 255 * deltaA[rgb]) + (1 - alpha) * fmax(imageB.at<Vec3b>(i, j)[rgb], 255 * deltaB[rgb]);
+                    //}
+                }
+            } else {
+                // 边界55开填充
+                for (int rgb = 0; rgb < 3; rgb++) {
+                    imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
+                }
+            }
+        }
+    }
+
+//    Mat grayA;
+//    Mat grayB;
+//    double brightnessA = 0.0;
+//    double brightnessB = 0.0;
+
+//    cvtColor(imageA, grayA, CV_RGB2GRAY);
+//    Scalar scalar = mean(grayA);
+//    brightnessA = scalar.val[0];
+
+//    cvtColor(imageB, grayB, CV_RGB2GRAY);
+//    scalar = mean(grayB);
+//    brightnessB = scalar.val[0];
+
+//    std::cout << brightnessA << std::endl;
+//    std::cout << brightnessB << std::endl;
+
+//    if (brightnessA >= brightnessB) {
+//        imageS = imageA;
+//    } else {
+//        imageS = imageB;
+//    }
+}
+
+
+void SalientRegionDetectionBasedonAC(Mat &src,int MinR2, int MaxR2,int Scale){
+    Mat Lab;
+    cvtColor(src, Lab, CV_BGR2Lab);
+
+    int row=src.rows,col=src.cols;
+    int Sal_org[row][col];
+    memset(Sal_org,0,sizeof(Sal_org));
+
+    Mat Sal=Mat::zeros(src.size(),CV_8UC1 );
+
+    Point3_<uchar>* p;
+    Point3_<uchar>* p1;
+    int val;
+    Mat filter;
+
+    int max_v=0;
+    int min_v=1<<28;
+    for (int k=0;k<Scale;k++){
+        int len=(MaxR2 - MinR2) * k / (Scale - 1) + MinR2;
+        blur(Lab, filter, Size(len,len ));
+        for (int i=0;i<row;i++){
+            for (int j=0;j<col;j++){
+                p=Lab.ptr<Point3_<uchar> > (i,j);
+                p1=filter.ptr<Point3_<uchar> > (i,j);
+                //cout<<(p->x - p1->x)*(p->x - p1->x)+ (p->y - p1->y)*(p->y-p1->y) + (p->z - p1->z)*(p->z - p1->z) <<" ";
+
+                val=sqrt( (p->x - p1->x)*(p->x - p1->x)+ (p->y - p1->y)*(p->y-p1->y) + (p->z - p1->z)*(p->z - p1->z) );
+                Sal_org[i][j]+=val;
+                if(k==Scale-1){
+                    max_v=max(max_v,Sal_org[i][j]);
+                    min_v=min(min_v,Sal_org[i][j]);
+                }
+            }
+        }
+    }
+
+    cout<<max_v<<" "<<min_v<<endl;
+    int X,Y;
+    for (Y = 0; Y < row; Y++)
+    {
+        for (X = 0; X < col; X++)
+        {
+            Sal.at<uchar>(Y,X) = (Sal_org[Y][X] - min_v)*255/(max_v - min_v);        //    计算全图每个像素的显著性
+            //Sal.at<uchar>(Y,X) = (Dist[gray[Y][X]])*255/(max_gray);        //    计算全图每个像素的显著性
+        }
+    }
+    imshow("sal",Sal);
+    waitKey(0);
+}
+
 // 将两个原图像的拉普拉斯金字塔融合
 void blendLaplacianPyramids(LapPyr& pyrA, LapPyr& pyrB, LapPyr& pyrS, Mat& dst, int strategy) {
     pyrS.clear();
@@ -549,6 +763,14 @@ void blendLaplacianPyramids(LapPyr& pyrA, LapPyr& pyrB, LapPyr& pyrS, Mat& dst, 
         case 4:
             if (idx == pyrS.size() - 1) {
                 blendLaplacianPyramidsByBrightness(pyrA[idx], pyrB[idx], pyrS[idx]);
+            } else {
+                blendLaplacianPyramidsByRE2(pyrA[idx], pyrB[idx], pyrS[idx]);
+            }
+            break;
+
+        case 5:
+            if (idx == pyrS.size() - 1) {
+                blendLaplacianPyramidsByHVS(pyrA[idx], pyrB[idx], pyrS[idx]);
             } else {
                 blendLaplacianPyramidsByRE2(pyrA[idx], pyrB[idx], pyrS[idx]);
             }
@@ -579,7 +801,9 @@ void showLaplacianPyramids(LapPyr& pyr) {
     }
 }
 
-int main() {
+
+
+int main2() {
     LapPyr LA;
     LapPyr LB;
     LapPyr LS;
@@ -587,39 +811,45 @@ int main() {
     // AVATAR_PATH IMG1_PATH
 
     // 图像A 拉普拉斯金字塔
-    Mat srcA = imread(IMG11_PATH);
+    Mat srcA = imread(IMG31_PATH);
+
     Mat srcASSR = Mat::zeros(srcA.size(), CV_8UC3);
     // ssr(srcA, srcASSR, 15);
     msr(srcA, srcASSR, {15, 80, 250});
     imshow("msr", srcASSR);
-    buildLaplacianPyramids(srcASSR, LA);
+    buildLaplacianPyramids(srcA, LA);
     // showLaplacianPyramids(LA);
 
     // 图像B 拉普拉斯金字塔
-    Mat srcB = imread(IMG12_PATH);
+    Mat srcB = imread(IMG32_PATH);
     buildLaplacianPyramids(srcB, LB);
     // showLaplacianPyramids(LB);
 
     // 融合
     Mat dst1;
     blendLaplacianPyramids(LA, LB, LS, dst1, 1);
-    restoreBrightness(dst1);
+    //restoreBrightness(dst1);
     imshow("1", dst1);
 
     Mat dst2;
     blendLaplacianPyramids(LA, LB, LS, dst2, 2);
-    restoreBrightness(dst2);
+    //restoreBrightness(dst2);
     imshow("2", dst2);
 
     Mat dst3;
     blendLaplacianPyramids(LA, LB, LS, dst3, 3);
-    restoreBrightness(dst3);
+    //restoreBrightness(dst3);
     imshow("3", dst3);
 
     Mat dst4;
     blendLaplacianPyramids(LA, LB, LS, dst4, 4);
-    restoreBrightness(dst4);
+    //restoreBrightness(dst4);
     imshow("4", dst4);
+
+    Mat dst5;
+    blendLaplacianPyramids(LA, LB, LS, dst5, 5);
+    //restoreBrightness(dst5);
+    imshow("5", dst5);
 
     showBrightness(dst1);
     showBrightness(dst2);
