@@ -39,7 +39,8 @@ cv::Mat LocalLaplacianFilter(const cv::Mat& input,
                              double sigma_r) {
   RemappingFunction r(alpha, beta);
 
-  int num_levels = LaplacianPyramid::GetLevelCount(input.rows, input.cols, 30);
+  // int num_levels = LaplacianPyramid::GetLevelCount(input.rows, input.cols, 30);
+  int num_levels = 2;
   cout << "Number of levels: " << num_levels << endl;
 
   const int kRows = input.rows;
@@ -86,17 +87,22 @@ cv::Mat LocalLaplacianFilter(const cv::Mat& input,
         output.at<T>(l, y, x) = tmp_pyr.at<T>(l, full_res_roi_y >> l,
                                                  full_res_roi_x >> l);
       }
-      cout << "Level " << (l+1) << " (" << output[l].rows << " x "
-           << output[l].cols << "), footprint: " << subregion_size << "x"
-           << subregion_size << " ... " << round(100.0 * y / output[l].rows)
-           << "%\r";
-      cout.flush();
+//      cout << "Level " << (l+1) << " (" << output[l].rows << " x "
+//           << output[l].cols << "), footprint: " << subregion_size << "x"
+//           << subregion_size << " ... " << round(100.0 * y / output[l].rows)
+//           << "%\r";
+//      cout.flush();
     }
     stringstream ss;
     ss << "level" << l << ".png";
     cv::imwrite(ss.str(), ByteScale(cv::abs(output[l])));
     cout << endl;
   }
+
+  stringstream ss;
+  ss << "level" << num_levels << ".png";
+  cv::imwrite(ss.str(), ByteScale(cv::abs(output[num_levels])));
+  cout << endl;
 
   return output.Reconstruct();
 }
@@ -111,7 +117,10 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  cv::Mat input = cv::imread(argv[1]);
+  cv::Mat input_rgb = cv::imread(argv[1]);
+  cv::Mat input;
+  cv::cvtColor(input_rgb, input, CV_RGB2GRAY);
+
   if (input.data == NULL) {
     cerr << "Could not read input image." << endl;
     return 1;
