@@ -31,6 +31,112 @@ using namespace cv;
 #define FLIR_00001_1 "..\\image\\FLIR_video_00001.jpg"
 #define FLIR_00001_2 "..\\image\\FLIR_video_00001.jpeg"
 
+#include "gaussian_pyramid.h"
+#include "laplacian_pyramid.h"
+#include "opencv_utils.h"
+#include "remapping_function.h"
+
+#include <iostream>
+#include <sstream>
+
+using namespace std;
+
+void OutputBinaryImage(const std::string& filename, cv::Mat image) {
+  FILE* f = fopen(filename.c_str(), "wb");
+  for (int x = 0; x < image.cols; x++) {
+    for (int y = 0; y < image.rows; y++) {
+      double tmp = image.at<double>(y, x);
+      fwrite(&tmp, sizeof(double), 1, f);
+    }
+  }
+  fclose(f);
+}
+
+// Perform Local Laplacian filtering on the given image.
+//
+// Arguments:
+//  input    The input image. Can be any type, but will be converted to double
+//           for computation.
+//  alpha    Exponent for the detail remapping function. (< 1 for detail
+//           enhancement, > 1 for detail suppression)
+//  beta     Slope for edge remapping function (< 1 for tone mapping, > 1 for
+//           inverse tone mapping)
+//  sigma_r  Edge threshold (in image range space).
+template<typename T>
+LaplacianPyramid LocalLaplacianFilter(const cv::Mat& input,
+                             double alpha,
+                             double beta,
+                             double sigma_r) {
+  RemappingFunction r(alpha, beta);
+
+  // int num_levels = LaplacianPyramid::GetLevelCount(input.rows, input.cols, 30);
+  int num_levels = 2;
+  cout << "Number of levels: " << num_levels << endl;
+
+  const int kRows = input.rows;
+  const int kCols = input.cols;
+
+  GaussianPyramid gauss_input(input, num_levels);
+
+  // Construct the unfilled Laplacian pyramid of the output. Copy the residual
+  // over from the top of the Gaussian pyramid.
+  LaplacianPyramid output(kRows, kCols, input.channels(), num_levels);
+  gauss_input[num_levels].copyTo(output[num_levels]);
+
+  // Calculate each level of the ouput Laplacian pyramid.
+  for (int l = 0; l < num_levels; l++) {
+    int subregion_size = 3 * ((1 << (l + 2)) - 1);
+    int subregion_r = subregion_size / 2;
+
+    for (int y = 0; y < output[l].rows; y++) {
+      // Calculate the y-bounds of the region in the full-res image.
+      int full_res_y = (1 << l) * y;
+      int roi_y0 = full_res_y - subregion_r;
+      int roi_y1 = full_res_y + subregion_r + 1;
+      cv::Range row_range(max(0, roi_y0), min(roi_y1, kRows));
+      int full_res_roi_y = full_res_y - row_range.start;
+
+      for (int x = 0; x < output[l].cols; x++) {
+        // Calculate the x-bounds of the region in the full-res image.
+        int full_res_x = (1 << l) * x;
+        int roi_x0 = full_res_x - subregion_r;
+        int roi_x1 = full_res_x + subregion_r + 1;
+        cv::Range col_range(max(0, roi_x0), min(roi_x1, kCols));
+        int full_res_roi_x = full_res_x - col_range.start;
+
+        // Remap the region around the current pixel.
+        cv::Mat r0 = input(row_range, col_range);
+        cv::Mat remapped;
+        r.Evaluate<T>(r0, remapped, gauss_input[l].at<T>(y, x), sigma_r);
+
+        // Construct the Laplacian pyramid for the remapped region and copy the
+        // coefficient over to the ouptut Laplacian pyramid.
+        LaplacianPyramid tmp_pyr(remapped, l + 1,
+            {row_range.start, row_range.end - 1,
+             col_range.start, col_range.end - 1});
+        output.at<T>(l, y, x) = tmp_pyr.at<T>(l, full_res_roi_y >> l,
+                                                 full_res_roi_x >> l);
+      }
+//      cout << "Level " << (l+1) << " (" << output[l].rows << " x "
+//           << output[l].cols << "), footprint: " << subregion_size << "x"
+//           << subregion_size << " ... " << round(100.0 * y / output[l].rows)
+//           << "%\r";
+//      cout.flush();
+    }
+    stringstream ss;
+    ss << "level" << l << ".png";
+    cv::imwrite(ss.str(), ByteScale(cv::abs(output[l])));
+    cout << endl;
+  }
+
+  stringstream ss;
+  ss << "level" << num_levels << ".png";
+  cv::imwrite(ss.str(), ByteScale(cv::abs(output[num_levels])));
+  cout << endl;
+
+  return output;
+}
+
 void SalientRegionDetectionBasedonFT(Mat &src, Mat &dst, Mat &sal){
     Mat Lab;
     cvtColor(src, Lab, CV_BGR2Lab);
@@ -129,9 +235,14 @@ void linearTransform(Mat& image, int a, int b) {
 
     for (int i = 0; i < height; i++) {
         for(int j = 0; j < width; j++) {
-            for (int rgb = 0; rgb < 3; rgb++) {
-                image.at<Vec3f>(i, j)[rgb] = a * image.at<Vec3f>(i, j)[rgb] + b;
+            if (image.channels() == 1) {
+                image.at<float>(i, j) = a * image.at<float>(i, j) + b;
+            } else {
+                for (int rgb = 0; rgb < 3; rgb++) {
+                    image.at<Vec3f>(i, j)[rgb] = a * image.at<Vec3f>(i, j)[rgb] + b;
+                }
             }
+
         }
     }
 }
@@ -186,18 +297,32 @@ void convertTo8UC3Way1(Mat& imageFrom, Mat& imageTo) {
 
     for (int i = 0; i < height; i++) {
         for(int j = 0; j < width; j++) {
-            for (int rgb = 0; rgb < 3; rgb++) {
+            if (imageFrom.channels() == 1) {
                 // double value = (imageFrom.at<Vec3f>(i, j)[rgb] - min) * 255 / (max - min);
-                double value = (imageFrom.at<Vec3f>(i, j)[rgb]);
+                double value = (imageFrom.at<float>(i, j));
 
                 if ( value > 255) {
-                    imageTo.at<Vec3b>(i, j)[rgb] = 255;
+                    imageTo.at<uchar>(i, j) = 255;
                 } else if (value < 0) {
-                    imageTo.at<Vec3b>(i, j)[rgb] = 0;
+                    imageTo.at<uchar>(i, j) = 0;
                 } else {
-                    imageTo.at<Vec3b>(i, j)[rgb] = (uchar)value;
+                    imageTo.at<uchar>(i, j) = (uchar)value;
+                }
+            } else {
+                for (int rgb = 0; rgb < 3; rgb++) {
+                    // double value = (imageFrom.at<Vec3f>(i, j)[rgb] - min) * 255 / (max - min);
+                    double value = (imageFrom.at<Vec3f>(i, j)[rgb]);
+
+                    if ( value > 255) {
+                        imageTo.at<Vec3b>(i, j)[rgb] = 255;
+                    } else if (value < 0) {
+                        imageTo.at<Vec3b>(i, j)[rgb] = 0;
+                    } else {
+                        imageTo.at<Vec3b>(i, j)[rgb] = (uchar)value;
+                    }
                 }
             }
+
         }
     }
 }
@@ -229,17 +354,30 @@ void convertTo8UC3Way2(Mat& imageFrom, Mat& imageTo) {
 
     for (int i = 0; i < imageFrom.rows; i++) {
         for(int j = 0; j < imageFrom.cols; j++) {
-            for (int rgb = 0; rgb < 3; rgb++) {
-                double value = (imageFrom.at<Vec3f>(i, j)[rgb] - mins[rgb]) * 255 / (maxs[rgb] - mins[rgb]);
+            if (imageFrom.channels() == 1) {
+                double value = (imageFrom.at<float>(i, j) - mins[0]) * 255 / (maxs[0] - mins[0]);
 
                 if ( value > 255) {
-                    imageFrom.at<Vec3f>(i, j)[rgb] = 255;
+                    imageFrom.at<float>(i, j) = 255;
                 } else if (value < 0) {
-                    imageFrom.at<Vec3f>(i, j)[rgb] = 0;
+                    imageFrom.at<float>(i, j) = 0;
                 } else {
-                    imageFrom.at<Vec3f>(i, j)[rgb] = (uchar)value;
+                    imageFrom.at<float>(i, j) = (uchar)value;
+                }
+            } else {
+                for (int rgb = 0; rgb < 3; rgb++) {
+                    double value = (imageFrom.at<Vec3f>(i, j)[rgb] - mins[rgb]) * 255 / (maxs[rgb] - mins[rgb]);
+
+                    if ( value > 255) {
+                        imageFrom.at<Vec3f>(i, j)[rgb] = 255;
+                    } else if (value < 0) {
+                        imageFrom.at<Vec3f>(i, j)[rgb] = 0;
+                    } else {
+                        imageFrom.at<Vec3f>(i, j)[rgb] = (uchar)value;
+                    }
                 }
             }
+
         }
     }
 
@@ -271,17 +409,30 @@ void restoreBrightness(Mat& imageFrom) {
 
     for (int i = 0; i < imageFrom.rows; i++) {
         for(int j = 0; j < imageFrom.cols; j++) {
-            for (int rgb = 0; rgb < 3; rgb++) {
-                double value = (imageFrom.at<Vec3b>(i, j)[rgb] - mins[rgb]) * 255 / (maxs[rgb] - mins[rgb]);
+            if (imageFrom.channels() == 1) {
+                double value = (imageFrom.at<uchar>(i, j) - mins[0]) * 255 / (maxs[0] - mins[0]);
 
                 if ( value > 255) {
-                    imageFrom.at<Vec3b>(i, j)[rgb] = 255;
+                    imageFrom.at<uchar>(i, j) = 255;
                 } else if (value < 0) {
-                    imageFrom.at<Vec3b>(i, j)[rgb] = 0;
+                    imageFrom.at<uchar>(i, j) = 0;
                 } else {
-                    imageFrom.at<Vec3b>(i, j)[rgb] = (uchar)value;
+                    imageFrom.at<uchar>(i, j) = (uchar)value;
+                }
+            } else {
+                for (int rgb = 0; rgb < 3; rgb++) {
+                    double value = (imageFrom.at<Vec3b>(i, j)[rgb] - mins[rgb]) * 255 / (maxs[rgb] - mins[rgb]);
+
+                    if ( value > 255) {
+                        imageFrom.at<Vec3b>(i, j)[rgb] = 255;
+                    } else if (value < 0) {
+                        imageFrom.at<Vec3b>(i, j)[rgb] = 0;
+                    } else {
+                        imageFrom.at<Vec3b>(i, j)[rgb] = (uchar)value;
+                    }
                 }
             }
+
         }
     }
 }
@@ -293,9 +444,14 @@ void convertTo32FC3(Mat& imageFrom, Mat& imageTo) {
 
     for (int i = 0; i < height; i++) {
         for(int j = 0; j < width; j++) {
-            for (int rgb = 0; rgb < 3; rgb++) {
-                imageTo.at<Vec3f>(i, j)[rgb] = imageFrom.at<Vec3b>(i, j)[rgb];
+            if (imageFrom.channels() == 1) {
+                imageTo.at<float>(i, j) = imageFrom.at<uchar>(i, j);
+            } else {
+                for (int rgb = 0; rgb < 3; rgb++) {
+                    imageTo.at<Vec3f>(i, j)[rgb] = imageFrom.at<Vec3b>(i, j)[rgb];
+                }
             }
+
         }
     }
 }
@@ -307,9 +463,14 @@ void killZero(Mat& image) {
 
     for (int i = 0; i < height; i++) {
         for(int j = 0; j < width; j++) {
-            for (int rgb = 0; rgb < 3; rgb++) {
-                image.at<Vec3f>(i, j)[rgb] += THRESHOLD_LOG;
+            if (image.channels() == 1) {
+                image.at<float>(i, j) += THRESHOLD_LOG;
+            } else {
+                for (int rgb = 0; rgb < 3; rgb++) {
+                    image.at<Vec3f>(i, j)[rgb] += THRESHOLD_LOG;
+                }
             }
+
         }
     }
 }
@@ -417,30 +578,55 @@ void blendLaplacianPyramidsByXYDir(Mat& imageA, Mat& imageB, Mat& imageS) {
                 double deltaB[3] = {0};
                 for (int rowOffset = -1; rowOffset <= 1; rowOffset++) {
                     for (int colOffset= -1; colOffset <= 1; colOffset++) {
-                        for (int rgb = 0; rgb < 3; rgb++) {
+                        if (imageA.channels() == 1) {
                             int x = i + rowOffset;
                             int y = j + colOffset;
-                            deltaA[rgb] += sqrt(0.5 * pow(imageA.at<Vec3b>(x, y)[rgb] - imageA.at<Vec3b>(x - 1, y)[rgb], 2) + 0.5 * pow(imageA.at<Vec3b>(x, y)[rgb] - imageA.at<Vec3b>(x, y - 1)[rgb], 2));
-                            deltaB[rgb] += sqrt(0.5 * pow(imageB.at<Vec3b>(x, y)[rgb] - imageB.at<Vec3b>(x - 1, y)[rgb], 2) + 0.5 * pow(imageB.at<Vec3b>(x, y)[rgb] - imageB.at<Vec3b>(x, y - 1)[rgb], 2));
+                            deltaA[0] += sqrt(0.5 * pow(imageA.at<uchar>(x, y) - imageA.at<uchar>(x - 1, y), 2) + 0.5 * pow(imageA.at<uchar>(x, y) - imageA.at<uchar>(x, y - 1), 2));
+                            deltaB[0] += sqrt(0.5 * pow(imageB.at<uchar>(x, y) - imageB.at<uchar>(x - 1, y), 2) + 0.5 * pow(imageB.at<uchar>(x, y) - imageB.at<uchar>(x, y - 1), 2));
+
+                        } else {
+                            for (int rgb = 0; rgb < 3; rgb++) {
+                                int x = i + rowOffset;
+                                int y = j + colOffset;
+                                deltaA[rgb] += sqrt(0.5 * pow(imageA.at<Vec3b>(x, y)[rgb] - imageA.at<Vec3b>(x - 1, y)[rgb], 2) + 0.5 * pow(imageA.at<Vec3b>(x, y)[rgb] - imageA.at<Vec3b>(x, y - 1)[rgb], 2));
+                                deltaB[rgb] += sqrt(0.5 * pow(imageB.at<Vec3b>(x, y)[rgb] - imageB.at<Vec3b>(x - 1, y)[rgb], 2) + 0.5 * pow(imageB.at<Vec3b>(x, y)[rgb] - imageB.at<Vec3b>(x, y - 1)[rgb], 2));
+                            }
+                        }
+
+                    }
+                }
+                if (imageA.channels() == 1) {
+                    if (deltaA[0] == deltaB[0]) {
+                        imageS.at<uchar>(i, j) = 0.5 * imageA.at<uchar>(i, j) + 0.5 * imageB.at<uchar>(i, j);
+                    } else if (deltaA[0] > deltaB[0]) {
+                        imageS.at<uchar>(i, j) = imageA.at<uchar>(i, j);
+                    } else {
+                        imageS.at<uchar>(i, j) = imageB.at<uchar>(i, j);
+                    }
+                } else {
+                    // 根据梯度大小进行融合
+                    for (int rgb = 0; rgb < 3; rgb++) {
+                        if (deltaA[rgb] == deltaB[rgb]) {
+                            imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
+                        } else if (deltaA[rgb] > deltaB[rgb]) {
+                            imageS.at<Vec3b>(i, j)[rgb] = imageA.at<Vec3b>(i, j)[rgb];
+                        } else {
+                            imageS.at<Vec3b>(i, j)[rgb] = imageB.at<Vec3b>(i, j)[rgb];
                         }
                     }
                 }
-                // 根据梯度大小进行融合
-                for (int rgb = 0; rgb < 3; rgb++) {
-                    if (deltaA[rgb] == deltaB[rgb]) {
+
+
+            } else {
+                if (imageA.channels() == 1) {
+                    imageS.at<uchar>(i, j) = 0.5 * imageA.at<uchar>(i, j) + 0.5 * imageB.at<uchar>(i, j);
+                } else {
+                    // 边界55开填充
+                    for (int rgb = 0; rgb < 3; rgb++) {
                         imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
-                    } else if (deltaA[rgb] > deltaB[rgb]) {
-                        imageS.at<Vec3b>(i, j)[rgb] = imageA.at<Vec3b>(i, j)[rgb];
-                    } else {
-                        imageS.at<Vec3b>(i, j)[rgb] = imageB.at<Vec3b>(i, j)[rgb];
                     }
                 }
 
-            } else {
-                // 边界55开填充
-                for (int rgb = 0; rgb < 3; rgb++) {
-                    imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
-                }
             }
         }
     }
@@ -470,90 +656,123 @@ void blendLaplacianPyramidsByRE2(Mat& imageA, Mat& imageB, Mat& imageS) {
                 double matchDegree[3] = {0.0};
                 for (int rowOffset = -1; rowOffset <= 1; rowOffset++) {
                     for (int colOffset= -1; colOffset <= 1; colOffset++) {
-                        for (int rgb = 0; rgb < 3; rgb++) {
+                        if (imageA.channels() == 1) {
                             int x = i + rowOffset;
                             int y = j + colOffset;
 
-                            deltaA[rgb] += G[1+rowOffset][1+colOffset] * pow(imageA.at<Vec3b>(x, y)[rgb], 2);
-                            deltaB[rgb] += G[1+rowOffset][1+colOffset] * pow(imageB.at<Vec3b>(x, y)[rgb], 2);
-                            matchDegree[rgb] += G[1+rowOffset][1+colOffset] * imageA.at<Vec3b>(x, y)[rgb] * imageB.at<Vec3b>(x, y)[rgb];
-                        }
-                    }
-                }
-                // 计算匹配度
-                for (int rgb = 0; rgb < 3; rgb++) {
-                    matchDegree[rgb] = pow(matchDegree[rgb], 2) / (deltaA[rgb] * deltaB[rgb]);
-
-                    if (isnan(matchDegree[rgb]) || matchDegree[rgb] < matchDegreeLimit) {
-                        if (deltaA[rgb] == deltaB[rgb]) {
-                            imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
-                        } else if (deltaA[rgb] > deltaB[rgb]) {
-                            imageS.at<Vec3b>(i, j)[rgb] = imageA.at<Vec3b>(i, j)[rgb];
+                            deltaA[0] += G[1+rowOffset][1+colOffset] * pow(imageA.at<uchar>(x, y), 2);
+                            deltaB[0] += G[1+rowOffset][1+colOffset] * pow(imageB.at<uchar>(x, y), 2);
+                            matchDegree[0] += G[1+rowOffset][1+colOffset] * imageA.at<uchar>(x, y) * imageB.at<uchar>(x, y);
                         } else {
-                            imageS.at<Vec3b>(i, j)[rgb] = imageB.at<Vec3b>(i, j)[rgb];
+                            for (int rgb = 0; rgb < 3; rgb++) {
+                                int x = i + rowOffset;
+                                int y = j + colOffset;
+
+                                deltaA[rgb] += G[1+rowOffset][1+colOffset] * pow(imageA.at<Vec3b>(x, y)[rgb], 2);
+                                deltaB[rgb] += G[1+rowOffset][1+colOffset] * pow(imageB.at<Vec3b>(x, y)[rgb], 2);
+                                matchDegree[rgb] += G[1+rowOffset][1+colOffset] * imageA.at<Vec3b>(x, y)[rgb] * imageB.at<Vec3b>(x, y)[rgb];
+                            }
+                        }
+
+                    }
+                }
+                if (imageA.channels() == 1) {
+                    matchDegree[0] = pow(matchDegree[0], 2) / (deltaA[0] * deltaB[0]);
+
+                    if (isnan(matchDegree[0]) || matchDegree[0] < matchDegreeLimit) {
+                        if (deltaA[0] == deltaB[0]) {
+                            imageS.at<uchar>(i, j) = 0.5 * imageA.at<uchar>(i, j) + 0.5 * imageB.at<uchar>(i, j);
+                        } else if (deltaA[0] > deltaB[0]) {
+                            imageS.at<uchar>(i, j) = imageA.at<uchar>(i, j);
+                        } else {
+                            imageS.at<uchar>(i, j) = imageB.at<uchar>(i, j);
                         }
                     } else {
-                        double wMin = 0.5 * (1 - (1 - matchDegree[rgb])/(1 - matchDegreeLimit));
-                        imageS.at<Vec3b>(i, j)[rgb] = min(imageA.at<Vec3b>(i, j)[rgb], imageB.at<Vec3b>(i, j)[rgb]) * wMin + max(imageA.at<Vec3b>(i, j)[rgb], imageB.at<Vec3b>(i, j)[rgb]) * (1 - wMin);
+                        double wMin = 0.5 * (1 - (1 - matchDegree[0])/(1 - matchDegreeLimit));
+                        imageS.at<uchar>(i, j) = min(imageA.at<uchar>(i, j), imageB.at<uchar>(i, j)) * wMin + max(imageA.at<uchar>(i, j), imageB.at<uchar>(i, j)) * (1 - wMin);
                     }
-                }
-            } else {
-                // 边界55开填充
-                for (int rgb = 0; rgb < 3; rgb++) {
-                    imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
-                }
-            }
-        }
-    }
-}
+                } else {
+                    // 计算匹配度
+                    for (int rgb = 0; rgb < 3; rgb++) {
+                        matchDegree[rgb] = pow(matchDegree[rgb], 2) / (deltaA[rgb] * deltaB[rgb]);
 
-// 融合策略为区域能量
-void blendLaplacianPyramidsByRE1(Mat& imageA, Mat& imageB, Mat& imageS) {
-    int G[3][3] = {
-        {1, 2, 1},
-        {2, 4, 2},
-        {1, 2, 1}
-    };
-    int height = imageA.rows;
-    int width = imageB.cols;
-
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-
-            // 不检查边界
-            if ((i > 1) && (i < (height - 2)) && (j > 1) && (j < (width - 2))) {
-                // 3*3
-                int deltaA[3] = {0};
-                int deltaB[3] = {0};
-                for (int rowOffset = -1; rowOffset <= 1; rowOffset++) {
-                    for (int colOffset= -1; colOffset <= 1; colOffset++) {
-                        for (int rgb = 0; rgb < 3; rgb++) {
-                            int x = i + rowOffset;
-                            int y = j + colOffset;
-
-                            deltaA[rgb] += G[1+rowOffset][1+colOffset] * imageA.at<Vec3b>(x, y)[rgb];
-                            deltaB[rgb] += G[1+rowOffset][1+colOffset] * imageB.at<Vec3b>(x, y)[rgb];
+                        if (isnan(matchDegree[rgb]) || matchDegree[rgb] < matchDegreeLimit) {
+                            if (deltaA[rgb] == deltaB[rgb]) {
+                                imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
+                            } else if (deltaA[rgb] > deltaB[rgb]) {
+                                imageS.at<Vec3b>(i, j)[rgb] = imageA.at<Vec3b>(i, j)[rgb];
+                            } else {
+                                imageS.at<Vec3b>(i, j)[rgb] = imageB.at<Vec3b>(i, j)[rgb];
+                            }
+                        } else {
+                            double wMin = 0.5 * (1 - (1 - matchDegree[rgb])/(1 - matchDegreeLimit));
+                            imageS.at<Vec3b>(i, j)[rgb] = min(imageA.at<Vec3b>(i, j)[rgb], imageB.at<Vec3b>(i, j)[rgb]) * wMin + max(imageA.at<Vec3b>(i, j)[rgb], imageB.at<Vec3b>(i, j)[rgb]) * (1 - wMin);
                         }
                     }
                 }
-                for (int rgb = 0; rgb < 3; rgb++) {
-                    if (deltaA[rgb] == deltaB[rgb]) {
+
+            } else {
+                if (imageA.channels() == 1) {
+                    imageS.at<uchar>(i, j) = 0.5 * imageA.at<uchar>(i, j) + 0.5 * imageB.at<uchar>(i, j);
+                } else {
+                    // 边界55开填充
+                    for (int rgb = 0; rgb < 3; rgb++) {
                         imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
-                    } else if (deltaA[rgb] > deltaB[rgb]) {
-                        imageS.at<Vec3b>(i, j)[rgb] = imageA.at<Vec3b>(i, j)[rgb];
-                    } else {
-                        imageS.at<Vec3b>(i, j)[rgb] = imageB.at<Vec3b>(i, j)[rgb];
                     }
                 }
-            } else {
-                // 边界55开填充
-                for (int rgb = 0; rgb < 3; rgb++) {
-                    imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
-                }
+
             }
         }
     }
 }
+
+//// 融合策略为区域能量
+//void blendLaplacianPyramidsByRE1(Mat& imageA, Mat& imageB, Mat& imageS) {
+//    int G[3][3] = {
+//        {1, 2, 1},
+//        {2, 4, 2},
+//        {1, 2, 1}
+//    };
+//    int height = imageA.rows;
+//    int width = imageB.cols;
+
+//    for (int i = 0; i < height; i++) {
+//        for (int j = 0; j < width; j++) {
+
+//            // 不检查边界
+//            if ((i > 1) && (i < (height - 2)) && (j > 1) && (j < (width - 2))) {
+//                // 3*3
+//                int deltaA[3] = {0};
+//                int deltaB[3] = {0};
+//                for (int rowOffset = -1; rowOffset <= 1; rowOffset++) {
+//                    for (int colOffset= -1; colOffset <= 1; colOffset++) {
+//                        for (int rgb = 0; rgb < 3; rgb++) {
+//                            int x = i + rowOffset;
+//                            int y = j + colOffset;
+
+//                            deltaA[rgb] += G[1+rowOffset][1+colOffset] * imageA.at<Vec3b>(x, y)[rgb];
+//                            deltaB[rgb] += G[1+rowOffset][1+colOffset] * imageB.at<Vec3b>(x, y)[rgb];
+//                        }
+//                    }
+//                }
+//                for (int rgb = 0; rgb < 3; rgb++) {
+//                    if (deltaA[rgb] == deltaB[rgb]) {
+//                        imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
+//                    } else if (deltaA[rgb] > deltaB[rgb]) {
+//                        imageS.at<Vec3b>(i, j)[rgb] = imageA.at<Vec3b>(i, j)[rgb];
+//                    } else {
+//                        imageS.at<Vec3b>(i, j)[rgb] = imageB.at<Vec3b>(i, j)[rgb];
+//                    }
+//                }
+//            } else {
+//                // 边界55开填充
+//                for (int rgb = 0; rgb < 3; rgb++) {
+//                    imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
+//                }
+//            }
+//        }
+//    }
+//}
 
 // 顶层融合策略: 选取亮度较大的图片
 void blendLaplacianPyramidsByBrightness(Mat& imageA, Mat& imageB, Mat& imageS) {
@@ -738,6 +957,18 @@ void SalientRegionDetectionBasedonAC(Mat &src,int MinR2, int MaxR2,int Scale){
     waitKey(0);
 }
 
+
+void showLaplacianPyramids(LapPyr& pyr, char flag) {
+    for(int i = 0; i < pyr.size(); i++) {
+        stringstream ss;
+        ss << flag << "level" << i << ".png";
+        cv::imwrite(ss.str(), ByteScale(cv::abs(pyr[i])));
+        // cv::imwrite(ss.str(), pyr[i]);
+        // waitKey(0);
+    }
+}
+
+
 // 将两个原图像的拉普拉斯金字塔融合
 void blendLaplacianPyramids(LapPyr& pyrA, LapPyr& pyrB, LapPyr& pyrS, Mat& dst, int strategy) {
     pyrS.clear();
@@ -755,7 +986,7 @@ void blendLaplacianPyramids(LapPyr& pyrA, LapPyr& pyrB, LapPyr& pyrS, Mat& dst, 
             }
             break;
         case 2:
-            blendLaplacianPyramidsByRE1(pyrA[idx], pyrB[idx], pyrS[idx]);
+            // blendLaplacianPyramidsByRE1(pyrA[idx], pyrB[idx], pyrS[idx]);
             break;
         case 3:
             blendLaplacianPyramidsByRE2(pyrA[idx], pyrB[idx], pyrS[idx]);
@@ -769,16 +1000,18 @@ void blendLaplacianPyramids(LapPyr& pyrA, LapPyr& pyrB, LapPyr& pyrS, Mat& dst, 
             break;
 
         case 5:
-            if (idx == pyrS.size() - 1) {
-                blendLaplacianPyramidsByHVS(pyrA[idx], pyrB[idx], pyrS[idx]);
-            } else {
-                blendLaplacianPyramidsByRE2(pyrA[idx], pyrB[idx], pyrS[idx]);
-            }
+//            if (idx == pyrS.size() - 1) {
+//                blendLaplacianPyramidsByHVS(pyrA[idx], pyrB[idx], pyrS[idx]);
+//            } else {
+//                blendLaplacianPyramidsByRE2(pyrA[idx], pyrB[idx], pyrS[idx]);
+//            }
             break;
         default:
             break;
         }
     }
+
+    showLaplacianPyramids(pyrS, 'S');
 
     // 输出图像
     for (int i = pyrS.size() - 1; i >= 1; i--) {
@@ -794,16 +1027,26 @@ void blendLaplacianPyramids(LapPyr& pyrA, LapPyr& pyrB, LapPyr& pyrS, Mat& dst, 
     dst = pyrS[0].clone();
 }
 
-void showLaplacianPyramids(LapPyr& pyr) {
-    for(int i = 0; i < pyr.size(); i++) {
-        imshow("88", pyr[i]);
-        waitKey(0);
-    }
+LapPyr buildLaplacianPyramidsLLF(Mat& input_rgb) {
+  const double kSigmaR = 0.3;
+  const double kAlpha = 1;
+  const double kBeta = 0;
+
+  cv::Mat input;
+  cv::cvtColor(input_rgb, input, CV_RGB2GRAY);
+
+  input.convertTo(input, CV_64F, 1 / 255.0);
+
+  LaplacianPyramid output = LocalLaplacianFilter<double>(input, kAlpha, kBeta, kSigmaR);
+  for (int l = 0; l < output.GetLevel(); l++) {
+      output[l] *= 255;
+      ByteScale(cv::abs(output[l]));
+      output[l].convertTo(output[l], CV_8UC1);
+  }
+  return output.pyramid_;
 }
 
-
-
-int main2() {
+int main() {
     LapPyr LA;
     LapPyr LB;
     LapPyr LS;
@@ -811,50 +1054,50 @@ int main2() {
     // AVATAR_PATH IMG1_PATH
 
     // 图像A 拉普拉斯金字塔
-    Mat srcA = imread(IMG31_PATH);
+    Mat srcA = imread(IMG11_PATH);
 
     Mat srcASSR = Mat::zeros(srcA.size(), CV_8UC3);
     // ssr(srcA, srcASSR, 15);
-    msr(srcA, srcASSR, {15, 80, 250});
-    imshow("msr", srcASSR);
-    buildLaplacianPyramids(srcA, LA);
-    // showLaplacianPyramids(LA);
+    // msr(srcA, srcASSR, {15, 80, 250});
+    // imshow("msr", srcASSR);
+    LA = buildLaplacianPyramidsLLF(srcA);
+    showLaplacianPyramids(LA, 'A');
 
     // 图像B 拉普拉斯金字塔
-    Mat srcB = imread(IMG32_PATH);
-    buildLaplacianPyramids(srcB, LB);
-    // showLaplacianPyramids(LB);
+    Mat srcB = imread(IMG12_PATH);
+    LB = buildLaplacianPyramidsLLF(srcB);
+    showLaplacianPyramids(LB, 'B');
 
-    // 融合
-    Mat dst1;
-    blendLaplacianPyramids(LA, LB, LS, dst1, 1);
-    //restoreBrightness(dst1);
-    imshow("1", dst1);
+//    // 融合
+//    Mat dst1;
+//    blendLaplacianPyramids(LA, LB, LS, dst1, 1);
+//    restoreBrightness(dst1);
+//    imshow("1", dst1);
 
-    Mat dst2;
-    blendLaplacianPyramids(LA, LB, LS, dst2, 2);
-    //restoreBrightness(dst2);
-    imshow("2", dst2);
+//    Mat dst2;
+//    blendLaplacianPyramids(LA, LB, LS, dst2, 2);
+//    restoreBrightness(dst2);
+//    imshow("2", dst2);
 
     Mat dst3;
     blendLaplacianPyramids(LA, LB, LS, dst3, 3);
-    //restoreBrightness(dst3);
+    // restoreBrightness(dst3);
     imshow("3", dst3);
 
-    Mat dst4;
-    blendLaplacianPyramids(LA, LB, LS, dst4, 4);
-    //restoreBrightness(dst4);
-    imshow("4", dst4);
+//    Mat dst4;
+//    blendLaplacianPyramids(LA, LB, LS, dst4, 4);
+//    restoreBrightness(dst4);
+//    imshow("4", dst4);
 
-    Mat dst5;
-    blendLaplacianPyramids(LA, LB, LS, dst5, 5);
-    //restoreBrightness(dst5);
-    imshow("5", dst5);
+//    Mat dst5;
+//    blendLaplacianPyramids(LA, LB, LS, dst5, 5);
+//    restoreBrightness(dst5);
+//    imshow("5", dst5);
 
-    showBrightness(dst1);
-    showBrightness(dst2);
-    showBrightness(dst3);
-    showBrightness(dst4);
+//    showBrightness(dst1);
+//    showBrightness(dst2);
+//    showBrightness(dst3);
+//    showBrightness(dst4);
 
     waitKey(0);
 
@@ -864,3 +1107,5 @@ int main2() {
 
     return 0;
 }
+
+

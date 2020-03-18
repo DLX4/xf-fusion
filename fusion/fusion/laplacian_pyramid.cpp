@@ -78,6 +78,10 @@ int LaplacianPyramid::GetLevelCount(int rows, int cols, int desired_base_size) {
   return static_cast<int>(std::ceil(std::abs(log2_dim - log2_des)));
 }
 
+int LaplacianPyramid::GetLevel() {
+    return pyramid_.size();
+}
+
 std::ostream &operator<<(std::ostream &output,
                          const LaplacianPyramid& pyramid) {
   output << "Laplacian Pyramid:" << std::endl;

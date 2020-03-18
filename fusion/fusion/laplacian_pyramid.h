@@ -57,6 +57,7 @@ class LaplacianPyramid {
   // Reconstruct the image from the pyramid.
   cv::Mat Reconstruct() const;
 
+  int GetLevel();
   // Get the recommended number of levels given the input size and the desired
   // size of the residual image.
   static int GetLevelCount(int rows, int cols, int desired_base_size);
@@ -65,7 +66,6 @@ class LaplacianPyramid {
   friend std::ostream &operator<<(std::ostream &output,
                                   const LaplacianPyramid& pyramid);
 
- private:
   std::vector<cv::Mat> pyramid_;
   std::vector<int> subwindow_;
 };
