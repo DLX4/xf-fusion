@@ -137,60 +137,6 @@ LaplacianPyramid LocalLaplacianFilter(const cv::Mat& input,
   return output;
 }
 
-void SalientRegionDetectionBasedonFT(Mat &src, Mat &dst, Mat &sal){
-    Mat Lab;
-    cvtColor(src, Lab, CV_BGR2Lab);
-
-    int row=src.rows,col=src.cols;
-
-    int Sal_org[row][col];
-    memset(Sal_org,0,sizeof(Sal_org));
-
-    Point3_<uchar>* p;
-
-    int MeanL=0,Meana=0,Meanb=0;
-    for (int i=0;i<row;i++){
-        for (int j=0;j<col;j++){
-            p=Lab.ptr<Point3_<uchar> > (i,j);
-            MeanL+=p->x;
-            Meana+=p->y;
-            Meanb+=p->z;
-        }
-    }
-    MeanL/=(row*col);
-    Meana/=(row*col);
-    Meanb/=(row*col);
-
-    GaussianBlur(Lab,Lab,Size(3,3),0,0);
-
-    int val;
-
-    int max_v=0;
-    int min_v=1<<28;
-
-    for (int i=0;i<row;i++){
-        for (int j=0;j<col;j++){
-            p=Lab.ptr<Point3_<uchar> > (i,j);
-            val=sqrt( (MeanL - p->x)*(MeanL - p->x)+ (p->y - Meana)*(p->y-Meana) + (p->z - Meanb)*(p->z - Meanb) );
-            Sal_org[i][j]=val;
-            max_v=max(max_v,val);
-            min_v=min(min_v,val);
-        }
-    }
-
-    cout<<max_v<<" "<<min_v<<endl;
-    int X,Y;
-    for (Y = 0; Y < row; Y++)
-    {
-        for (X = 0; X < col; X++)
-        {
-            dst.at<float>(Y,X) = (float)(Sal_org[Y][X] - min_v)*1/(max_v - min_v);
-            sal.at<uchar>(Y,X) = (Sal_org[Y][X] - min_v)*255/(max_v - min_v);
-        }
-    }
-    // imshow("sal",sal);
-    waitKey(0);
-}
 
 // 将mat输出到文件，便于调试
 void writeMatToFile(Mat& m, const char* filename) {
@@ -209,6 +155,49 @@ void writeMatToFile(Mat& m, const char* filename) {
     }
     fout.close();
 }
+
+// src 是灰度的，dst 是浮点
+void salient(Mat& src, Mat& dst) {
+    int histSize = 256;
+    float range[] = { 0, 255 } ;
+    const float* histRange = { range };
+    bool uniform = true; bool accumulate = false;
+
+    Mat hist;
+    calcHist(&src, 1, {0}, Mat(), hist, 1, &histSize, &histRange, uniform, accumulate);
+
+    // # 灰度值与其他值的距离
+    double dist[256] = {0.0};
+    for (int gray = 0; gray < 256; gray++) {
+        double value = 0.0;
+        for (int k = 0; k < 256; k++) {
+            value += hist.at<float>(k) * abs(gray - k);
+        }
+        dist[gray] = value;
+    }
+
+    int height = src.rows;
+    int width = src.cols;
+
+    float min = 1 << 24;
+    float max = 0.0;
+    for (int i = 0; i < height; i++) {
+        for(int j = 0; j < width; j++) {
+            uchar temp = src.at<uchar>(i,j);
+            dst.at<float>(i, j) = dist[temp];
+            max = fmax(max, dist[temp]);
+            min = fmin(min, dist[temp]);
+        }
+    }
+
+    // 归一化
+    for (int i = 0; i < height; i++) {
+        for(int j = 0; j < width; j++) {
+            dst.at<float>(i, j) = (dst.at<float>(i, j) - min) / (max - min);
+        }
+    }
+}
+
 
 // 浮点图像mat输出到文件，便于调试
 void writeMatToFile2(Mat& m, const char* filename) {
@@ -802,159 +791,63 @@ void blendLaplacianPyramidsByBrightness(Mat& imageA, Mat& imageB, Mat& imageS) {
 // 顶层融合策略: 边缘、显著性增强
 void blendLaplacianPyramidsByHVS(Mat& imageA, Mat& imageB, Mat& imageS) {
 
-    Mat imageA_sal = Mat::zeros(imageA.size(),CV_32FC1 );
-    Mat imageB_sal = Mat::zeros(imageB.size(),CV_32FC1 );
-
-    Mat imageA_sal_gray = Mat::zeros(imageA.size(),CV_8UC1 );
-    Mat imageB_sal_gray = Mat::zeros(imageB.size(),CV_8UC1 );
-
-    SalientRegionDetectionBasedonFT(imageA, imageA_sal, imageA_sal_gray);
-    SalientRegionDetectionBasedonFT(imageB, imageB_sal, imageB_sal_gray);
-
-    // 均值滤波
     double G[3][3] = {
-        {0.1111, 0.1111, 0.1111},
-        {0.1111, 0.1111, 0.1111},
-        {0.1111, 0.1111, 0.1111}
-    };
-    double matchDegreeLimit = 0.1;
+            {0.1111, 0.1111, 0.1111},
+            {0.1111, 0.1111, 0.1111},
+            {0.1111, 0.1111, 0.1111}
+        };
+    double matchDegreeLimit = 0.618;
+
+    Mat imageA_sal = Mat::zeros(imageA.size(),CV_32F );
+    Mat imageB_sal = Mat::zeros(imageB.size(),CV_32F );
+
+    salient(imageA, imageA_sal);
+    salient(imageB, imageB_sal);
+
+//    imshow("imageA_sal", imageA_sal);
+//    imshow("imageB_sal", imageB_sal);
+//    waitKey();
 
     int height = imageA.rows;
-    int width = imageB.cols;
+    int width = imageA.cols;
 
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
 
             // 不检查边界
             if ((i > 1) && (i < (height - 2)) && (j > 1) && (j < (width - 2))) {
+
                 // 3*3
                 double deltaA[3] = {0.0};
                 double deltaB[3] = {0.0};
+
                 for (int rowOffset = -1; rowOffset <= 1; rowOffset++) {
                     for (int colOffset= -1; colOffset <= 1; colOffset++) {
-                        for (int rgb = 0; rgb < 3; rgb++) {
-                            int x = i + rowOffset;
-                            int y = j + colOffset;
+                        int x = i + rowOffset;
+                        int y = j + colOffset;
 
-                            deltaA[rgb] += G[1+rowOffset][1+colOffset] * imageA_sal.at<float>(x, y);
-                            deltaB[rgb] += G[1+rowOffset][1+colOffset] * imageB_sal.at<float>(x, y);
-                        }
+                        deltaA[0] += G[1+rowOffset][1+colOffset] * imageA_sal.at<float>(x, y);
+                        deltaB[0] += G[1+rowOffset][1+colOffset] * imageB_sal.at<float>(x, y);
+
                     }
                 }
 
-//                for (int rgb = 0; rgb < 3; rgb++) {
-//                    std::cout << 666 << std::endl;
-//                    std::cout << fabs(deltaA[rgb] - deltaB[rgb]) << std::endl;
-//                    if (fabs(deltaA[rgb] - deltaB[rgb])  > matchDegreeLimit) {
-//                        if (deltaA[rgb] == deltaB[rgb]) {
-//                            imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
-//                        } else if (deltaA[rgb] > deltaB[rgb]) {
-//                            imageS.at<Vec3b>(i, j)[rgb] = imageA.at<Vec3b>(i, j)[rgb];
-//                        } else {
-//                            imageS.at<Vec3b>(i, j)[rgb] = imageB.at<Vec3b>(i, j)[rgb];
-//                        }
-//                    } else {
-//                        double alpha = deltaA[rgb] / deltaA[rgb] + deltaB[rgb];
-//                        imageS.at<Vec3b>(i, j)[rgb] = alpha * imageA.at<Vec3b>(i, j)[rgb] + (1 - alpha) * imageB.at<Vec3b>(i, j)[rgb];
-//                    }
-//                }
-                for (int rgb = 0; rgb < 3; rgb++) {
-//                    std::cout << 666 << std::endl;
-//                    std::cout << fabs(deltaA[rgb] - deltaB[rgb]) << std::endl;
-//                    if (fabs(imageA_sal.at<float>(i, j) - imageA_sal.at<float>(i, j))  > matchDegreeLimit) {
-//                        if (deltaA[rgb] == deltaB[rgb]) {
-//                            imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
-//                        } else if (deltaA[rgb] > deltaB[rgb]) {
-//                            imageS.at<Vec3b>(i, j)[rgb] = (unsigned char)fmax(imageA.at<Vec3b>(i, j)[rgb], 255 * deltaA[rgb]);
-//                        } else {
-//                            imageS.at<Vec3b>(i, j)[rgb] = (unsigned char)fmax(imageB.at<Vec3b>(i, j)[rgb], 255 * deltaB[rgb]);
-//                        }
-//                    } else {
-                        double alpha = deltaA[rgb] / deltaA[rgb] + deltaB[rgb];
-                        imageS.at<Vec3b>(i, j)[rgb] = alpha * fmax(imageA.at<Vec3b>(i, j)[rgb], 255 * deltaA[rgb]) + (1 - alpha) * fmax(imageB.at<Vec3b>(i, j)[rgb], 255 * deltaB[rgb]);
-                    //}
+                deltaB[0] -= 0.3;
+
+                if (deltaA[0] == deltaB[0]) {
+                    imageS.at<uchar>(i, j) = 0.5 * imageA.at<uchar>(i, j) + 0.5 * imageB.at<uchar>(i, j);
+                } else if (deltaA[0] > deltaB[0]) {
+                    imageS.at<uchar>(i, j) = imageA.at<uchar>(i, j);
+                } else {
+                    imageS.at<uchar>(i, j) = imageB.at<uchar>(i, j);
                 }
+
             } else {
-                // 边界55开填充
-                for (int rgb = 0; rgb < 3; rgb++) {
-                    imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
-                }
+                // 边界填充
+                imageS.at<uchar>(i, j) = 0.5 * imageA.at<uchar>(i, j) + 0.5 * imageB.at<uchar>(i, j);
             }
         }
     }
-
-//    Mat grayA;
-//    Mat grayB;
-//    double brightnessA = 0.0;
-//    double brightnessB = 0.0;
-
-//    cvtColor(imageA, grayA, CV_RGB2GRAY);
-//    Scalar scalar = mean(grayA);
-//    brightnessA = scalar.val[0];
-
-//    cvtColor(imageB, grayB, CV_RGB2GRAY);
-//    scalar = mean(grayB);
-//    brightnessB = scalar.val[0];
-
-//    std::cout << brightnessA << std::endl;
-//    std::cout << brightnessB << std::endl;
-
-//    if (brightnessA >= brightnessB) {
-//        imageS = imageA;
-//    } else {
-//        imageS = imageB;
-//    }
-}
-
-
-void SalientRegionDetectionBasedonAC(Mat &src,int MinR2, int MaxR2,int Scale){
-    Mat Lab;
-    cvtColor(src, Lab, CV_BGR2Lab);
-
-    int row=src.rows,col=src.cols;
-    int Sal_org[row][col];
-    memset(Sal_org,0,sizeof(Sal_org));
-
-    Mat Sal=Mat::zeros(src.size(),CV_8UC1 );
-
-    Point3_<uchar>* p;
-    Point3_<uchar>* p1;
-    int val;
-    Mat filter;
-
-    int max_v=0;
-    int min_v=1<<28;
-    for (int k=0;k<Scale;k++){
-        int len=(MaxR2 - MinR2) * k / (Scale - 1) + MinR2;
-        blur(Lab, filter, Size(len,len ));
-        for (int i=0;i<row;i++){
-            for (int j=0;j<col;j++){
-                p=Lab.ptr<Point3_<uchar> > (i,j);
-                p1=filter.ptr<Point3_<uchar> > (i,j);
-                //cout<<(p->x - p1->x)*(p->x - p1->x)+ (p->y - p1->y)*(p->y-p1->y) + (p->z - p1->z)*(p->z - p1->z) <<" ";
-
-                val=sqrt( (p->x - p1->x)*(p->x - p1->x)+ (p->y - p1->y)*(p->y-p1->y) + (p->z - p1->z)*(p->z - p1->z) );
-                Sal_org[i][j]+=val;
-                if(k==Scale-1){
-                    max_v=max(max_v,Sal_org[i][j]);
-                    min_v=min(min_v,Sal_org[i][j]);
-                }
-            }
-        }
-    }
-
-    cout<<max_v<<" "<<min_v<<endl;
-    int X,Y;
-    for (Y = 0; Y < row; Y++)
-    {
-        for (X = 0; X < col; X++)
-        {
-            Sal.at<uchar>(Y,X) = (Sal_org[Y][X] - min_v)*255/(max_v - min_v);        //    计算全图每个像素的显著性
-            //Sal.at<uchar>(Y,X) = (Dist[gray[Y][X]])*255/(max_gray);        //    计算全图每个像素的显著性
-        }
-    }
-    imshow("sal",Sal);
-    waitKey(0);
 }
 
 
@@ -1000,11 +893,11 @@ void blendLaplacianPyramids(LapPyr& pyrA, LapPyr& pyrB, LapPyr& pyrS, Mat& dst, 
             break;
 
         case 5:
-//            if (idx == pyrS.size() - 1) {
-//                blendLaplacianPyramidsByHVS(pyrA[idx], pyrB[idx], pyrS[idx]);
-//            } else {
-//                blendLaplacianPyramidsByRE2(pyrA[idx], pyrB[idx], pyrS[idx]);
-//            }
+            if (idx == pyrS.size() - 1) {
+                blendLaplacianPyramidsByHVS(pyrA[idx], pyrB[idx], pyrS[idx]);
+            } else {
+                blendLaplacianPyramidsByRE2(pyrA[idx], pyrB[idx], pyrS[idx]);
+            }
             break;
         default:
             break;
@@ -1044,6 +937,21 @@ LapPyr buildLaplacianPyramidsLLF(Mat& input_rgb) {
       output[l].convertTo(output[l], CV_8UC1);
   }
   return output.pyramid_;
+}
+
+int main2() {
+    Mat srcA_rgb = imread("Alevel2.png");
+    Mat srcA;
+    cv::cvtColor(srcA_rgb, srcA, CV_RGB2GRAY);
+
+    Mat srcB_rgb = imread("Blevel2.png");
+    Mat srcB;
+    cv::cvtColor(srcB_rgb, srcB, CV_RGB2GRAY);
+
+    Mat dst = Mat::zeros(srcA.size(), srcA.type());;
+    blendLaplacianPyramidsByHVS(srcA, srcA, dst);
+    imshow("dst", dst);
+    waitKey();
 }
 
 int main() {
@@ -1089,10 +997,10 @@ int main() {
 //    restoreBrightness(dst4);
 //    imshow("4", dst4);
 
-//    Mat dst5;
-//    blendLaplacianPyramids(LA, LB, LS, dst5, 5);
-//    restoreBrightness(dst5);
-//    imshow("5", dst5);
+    Mat dst5;
+    blendLaplacianPyramids(LA, LB, LS, dst5, 5);
+    // restoreBrightness(dst5);
+    imshow("5", dst5);
 
 //    showBrightness(dst1);
 //    showBrightness(dst2);
