@@ -39,9 +39,17 @@ LIBS +=  D:\opencv24\opencv24-qt5\lib\libopencv_calib3d2411.dll.a \
         D:\opencv24\opencv24-qt5\lib\libopencv_videostab2411.dll.a \
 
 SOURCES += \
-    Pyramids.cpp
+    Pyramids.cpp \
+    gaussian_pyramid.cpp \
+    laplacian_pyramid.cpp \
+    opencv_utils.cpp \
+    remapping_function.cpp
 
-HEADERS +=
+HEADERS += \
+    gaussian_pyramid.h \
+    laplacian_pyramid.h \
+    opencv_utils.h \
+    remapping_function.h
 
 FORMS += \
     mainwindow.ui
@@ -50,3 +58,6 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+DISTFILES += \
+    fusion.pro.user
