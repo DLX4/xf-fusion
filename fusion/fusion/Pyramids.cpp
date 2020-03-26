@@ -31,6 +31,18 @@ using namespace cv;
 #define FLIR_00001_1 "..\\image\\FLIR_video_00001.jpg"
 #define FLIR_00001_2 "..\\image\\FLIR_video_00001.jpeg"
 
+#define V01 "..\\image\\v01.bmp"
+#define I01 "..\\image\\i01.bmp"
+
+#define V02 "..\\image\\v02.bmp"
+#define I02 "..\\image\\i02.bmp"
+
+#define V03 "..\\image\\v03.bmp"
+#define I03 "..\\image\\i03.bmp"
+
+#define IMG1 IMG11_PATH
+#define IMG2 IMG12_PATH
+
 #include "gaussian_pyramid.h"
 #include "laplacian_pyramid.h"
 #include "opencv_utils.h"
@@ -41,6 +53,8 @@ using namespace cv;
 
 using namespace std;
 
+using LapPyr = vector<Mat>;
+
 void OutputBinaryImage(const std::string& filename, cv::Mat image) {
   FILE* f = fopen(filename.c_str(), "wb");
   for (int x = 0; x < image.cols; x++) {
@@ -50,6 +64,35 @@ void OutputBinaryImage(const std::string& filename, cv::Mat image) {
     }
   }
   fclose(f);
+}
+
+// 将mat输出到文件，便于调试
+void writeMatToFile(Mat& m, const char* filename) {
+    ofstream fout(filename);
+
+    if (!fout) {
+        std::cout << "File Not Opened" << std::endl;
+        return;
+    }
+
+    for (int i = 0; i < m.rows; i++) {
+        for (int j = 0; j < m.cols; j++) {
+            fout << m.at<float>(i, j) << "\t";
+        }
+        fout << std::endl;
+    }
+    fout.close();
+}
+
+
+void showLaplacianPyramids(LapPyr& pyr, char* flag) {
+    for(int i = 0; i < pyr.size(); i++) {
+        stringstream ss;
+        ss << flag << "level" << i << ".png";
+        cv::imwrite(ss.str(), ByteScale(cv::abs(pyr[i])));
+        // cv::imwrite(ss.str(), pyr[i]);
+        // waitKey(0);
+    }
 }
 
 // Perform Local Laplacian filtering on the given image.
@@ -109,52 +152,35 @@ LaplacianPyramid LocalLaplacianFilter(const cv::Mat& input,
         cv::Mat remapped;
         r.Evaluate<T>(r0, remapped, gauss_input[l].at<T>(y, x), sigma_r);
 
+//        stringstream s1,s2;
+//        s1 << x << "-" << y << "-r0.txt";
+//        s2 << x << "-" << y << "-remapped.txt";
+//        writeMatToFile(r0, s1.str().c_str());
+//        writeMatToFile(remapped, s2.str().c_str());
+
         // Construct the Laplacian pyramid for the remapped region and copy the
         // coefficient over to the ouptut Laplacian pyramid.
-        LaplacianPyramid tmp_pyr(remapped, l + 1,
-            {row_range.start, row_range.end - 1,
-             col_range.start, col_range.end - 1});
-        output.at<T>(l, y, x) = tmp_pyr.at<T>(l, full_res_roi_y >> l,
-                                                 full_res_roi_x >> l);
-      }
-//      cout << "Level " << (l+1) << " (" << output[l].rows << " x "
-//           << output[l].cols << "), footprint: " << subregion_size << "x"
-//           << subregion_size << " ... " << round(100.0 * y / output[l].rows)
-//           << "%\r";
-//      cout.flush();
-    }
-    stringstream ss;
-    ss << "level" << l << ".png";
-    cv::imwrite(ss.str(), ByteScale(cv::abs(output[l])));
-    cout << endl;
-  }
+//        LaplacianPyramid tmp_pyr(remapped, l + 1,
+//            {row_range.start, row_range.end - 1,
+//             col_range.start, col_range.end - 1});
+//        output.at<T>(l, y, x) = tmp_pyr.at<T>(l, full_res_roi_y >> l,
+//                                                 full_res_roi_x >> l);
 
-  stringstream ss;
-  ss << "level" << num_levels << ".png";
-  cv::imwrite(ss.str(), ByteScale(cv::abs(output[num_levels])));
-  cout << endl;
+//        if (l==0 && x == 0 && y == 125) {
+//            std::cout << (full_res_roi_y >> l) << " " << (full_res_roi_x >> l) << std::endl;
+//             showLaplacianPyramids(tmp_pyr.pyramid_, "tmp_pyr_");
+//        }
+      }
+
+    }
+
+  }
 
   return output;
 }
 
 
-// 将mat输出到文件，便于调试
-void writeMatToFile(Mat& m, const char* filename) {
-    ofstream fout(filename);
 
-    if (!fout) {
-        std::cout << "File Not Opened" << std::endl;
-        return;
-    }
-
-    for (int i = 0; i < m.rows; i++) {
-        for (int j = 0; j < m.cols; j++) {
-            fout << m.at<float>(i, j) << "\t";
-        }
-        fout << std::endl;
-    }
-    fout.close();
-}
 
 // src 是灰度的，dst 是浮点
 void salient(Mat& src, Mat& dst) {
@@ -526,7 +552,6 @@ void msr(Mat& img, Mat& dst, const vector<double>& sigmas) {
     convertTo8UC3Way2(result, dst);
 }
 
-using LapPyr = vector<Mat>;
 // 通过源图像构造拉普拉斯金字塔
 void buildLaplacianPyramids(Mat& src, LapPyr& pyr, int octvs=3) {
     // pyr[0~N]构成了拉普拉斯金字塔
@@ -549,7 +574,9 @@ void buildLaplacianPyramids(Mat& src, LapPyr& pyr, int octvs=3) {
         Mat subtract;
         addWeighted(pyr[i - 1], 1, expend, -1, 0, subtract);
         pyr[i - 1] = subtract.clone();
+
     }
+
 }
 
 // 顶层图像融合策略为平均梯度
@@ -804,9 +831,9 @@ void blendLaplacianPyramidsByHVS(Mat& imageA, Mat& imageB, Mat& imageS) {
     salient(imageA, imageA_sal);
     salient(imageB, imageB_sal);
 
-//    imshow("imageA_sal", imageA_sal);
-//    imshow("imageB_sal", imageB_sal);
-//    waitKey();
+    imshow("imageA_sal", imageA_sal);
+    imshow("imageB_sal", imageB_sal);
+    waitKey();
 
     int height = imageA.rows;
     int width = imageA.cols;
@@ -851,19 +878,10 @@ void blendLaplacianPyramidsByHVS(Mat& imageA, Mat& imageB, Mat& imageS) {
 }
 
 
-void showLaplacianPyramids(LapPyr& pyr, char flag) {
-    for(int i = 0; i < pyr.size(); i++) {
-        stringstream ss;
-        ss << flag << "level" << i << ".png";
-        cv::imwrite(ss.str(), ByteScale(cv::abs(pyr[i])));
-        // cv::imwrite(ss.str(), pyr[i]);
-        // waitKey(0);
-    }
-}
 
 
 // 将两个原图像的拉普拉斯金字塔融合
-void blendLaplacianPyramids(LapPyr& pyrA, LapPyr& pyrB, LapPyr& pyrS, Mat& dst, int strategy) {
+void blendLaplacianPyramids(LapPyr& pyrA, LapPyr& pyrB, LapPyr& pyrS, Mat& dst, int strategy, char* flag) {
     pyrS.clear();
     pyrS.resize(pyrA.size());
 
@@ -904,7 +922,7 @@ void blendLaplacianPyramids(LapPyr& pyrA, LapPyr& pyrB, LapPyr& pyrS, Mat& dst, 
         }
     }
 
-    showLaplacianPyramids(pyrS, 'S');
+    showLaplacianPyramids(pyrS, flag);
 
     // 输出图像
     for (int i = pyrS.size() - 1; i >= 1; i--) {
@@ -921,8 +939,8 @@ void blendLaplacianPyramids(LapPyr& pyrA, LapPyr& pyrB, LapPyr& pyrS, Mat& dst, 
 }
 
 LapPyr buildLaplacianPyramidsLLF(Mat& input_rgb) {
-  const double kSigmaR = 0.3;
-  const double kAlpha = 1;
+  const double kSigmaR = 0.4;
+  const double kAlpha = 0.25;
   const double kBeta = 0;
 
   cv::Mat input;
@@ -954,7 +972,7 @@ int main2() {
     waitKey();
 }
 
-int main() {
+int blendLp() {
     LapPyr LA;
     LapPyr LB;
     LapPyr LS;
@@ -962,58 +980,54 @@ int main() {
     // AVATAR_PATH IMG1_PATH
 
     // 图像A 拉普拉斯金字塔
-    Mat srcA = imread(IMG11_PATH);
+    Mat srcA = imread(IMG1);
 
-    Mat srcASSR = Mat::zeros(srcA.size(), CV_8UC3);
-    // ssr(srcA, srcASSR, 15);
-    // msr(srcA, srcASSR, {15, 80, 250});
-    // imshow("msr", srcASSR);
-    LA = buildLaplacianPyramidsLLF(srcA);
-    showLaplacianPyramids(LA, 'A');
+    buildLaplacianPyramids(srcA, LA);
+    showLaplacianPyramids(LA, "LP_A_");
 
     // 图像B 拉普拉斯金字塔
-    Mat srcB = imread(IMG12_PATH);
-    LB = buildLaplacianPyramidsLLF(srcB);
-    showLaplacianPyramids(LB, 'B');
-
-//    // 融合
-//    Mat dst1;
-//    blendLaplacianPyramids(LA, LB, LS, dst1, 1);
-//    restoreBrightness(dst1);
-//    imshow("1", dst1);
-
-//    Mat dst2;
-//    blendLaplacianPyramids(LA, LB, LS, dst2, 2);
-//    restoreBrightness(dst2);
-//    imshow("2", dst2);
+    Mat srcB = imread(IMG2);
+    buildLaplacianPyramids(srcB, LB);
+    showLaplacianPyramids(LB, "LP_B_");
 
     Mat dst3;
-    blendLaplacianPyramids(LA, LB, LS, dst3, 3);
-    // restoreBrightness(dst3);
-    imshow("3", dst3);
-
-//    Mat dst4;
-//    blendLaplacianPyramids(LA, LB, LS, dst4, 4);
-//    restoreBrightness(dst4);
-//    imshow("4", dst4);
-
-    Mat dst5;
-    blendLaplacianPyramids(LA, LB, LS, dst5, 5);
-    // restoreBrightness(dst5);
-    imshow("5", dst5);
-
-//    showBrightness(dst1);
-//    showBrightness(dst2);
-//    showBrightness(dst3);
-//    showBrightness(dst4);
-
-    waitKey(0);
-
-    // writeMatToFile(dst1, "..\\dst1.txt");
-    // writeMatToFile(dst2, "..\\dst2.txt");
-    // writeMatToFile(dst3, "..\\dst3.txt");
+    blendLaplacianPyramids(LA, LB, LS, dst3, 3, "LP_S_");
+    //restoreBrightness(dst3);
+    imshow("lp", dst3);
 
     return 0;
+}
+
+int blendLLF() {
+    LapPyr LA;
+    LapPyr LB;
+    LapPyr LS;
+
+    // AVATAR_PATH IMG1_PATH
+
+    // 图像A 拉普拉斯金字塔
+    Mat srcA = imread(IMG1);
+
+    LA = buildLaplacianPyramidsLLF(srcA);
+    showLaplacianPyramids(LA, "LLF_A_");
+
+    // 图像B 拉普拉斯金字塔
+    Mat srcB = imread(IMG2);
+    LB = buildLaplacianPyramidsLLF(srcB);
+    showLaplacianPyramids(LB, "LLF_B_");
+
+    Mat dst3;
+    blendLaplacianPyramids(LA, LB, LS, dst3, 3, "LLF_S_");
+    // restoreBrightness(dst3);
+    imshow("llf", dst3);
+
+    return 0;
+}
+
+int main() {
+    blendLp();
+    blendLLF();
+    waitKey(0);
 }
 
 

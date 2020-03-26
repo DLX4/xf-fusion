@@ -68,4 +68,5 @@ void RemappingFunction::Evaluate(const cv::Mat& input, cv::Mat& output,
   }
 }
 
+
 #endif  // REMAPPING_FUNCTION_H
