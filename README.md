@@ -1,1 +1,1 @@
-# image fusion algorithm implementation for infrared image and visible image
+# implement of infrared and visible image fusion algorithm
