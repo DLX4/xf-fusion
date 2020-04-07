@@ -7,7 +7,43 @@
               <a-step class="steps" key="算法参数" title="算法参数" />
               <a-step class="steps" key="融合图像" title="融合图像" />
           </a-steps>
-          <div class="steps-content">{{steps[current].content}}</div>
+          <div class="steps-content" v-if="current > 1">{{steps[current].content}}</div>
+          <div class="steps-content" v-if="current == 0">
+              <a-upload
+                      name="image"
+                      listType="picture-card"
+                      class="image-uploader"
+                      :showUploadList="false"
+                      action="https://www.mocky.io/v2/5cc8019d300000980a055e76"
+                      :beforeUpload="beforeUpload"
+                      @change="handleChangeA"
+              >
+                  <img class="image-uploaded" v-if="imageUrlA" :src="imageUrlA" alt="image" />
+                  <div v-else>
+                      <a-icon :type="loading ? 'loading' : 'plus'" />
+                      <div class="ant-upload-text">Upload</div>
+                  </div>
+              </a-upload>
+          </div>
+
+          <div class="steps-content" v-if="current == 1">
+              <a-upload
+                      name="image"
+                      listType="picture-card"
+                      class="image-uploader"
+                      :showUploadList="false"
+                      action="https://www.mocky.io/v2/5cc8019d300000980a055e76"
+                      :beforeUpload="beforeUpload"
+                      @change="handleChangeB"
+              >
+                  <img class="image-uploaded" v-if="imageUrlB" :src="imageUrlB" alt="image" />
+                  <div v-else>
+                      <a-icon :type="loading ? 'loading' : 'plus'" />
+                      <div class="ant-upload-text">Upload</div>
+                  </div>
+              </a-upload>
+          </div>
+
           <div class="steps-action">
               <a-button v-if="current<2" type="primary" @click="next">下一步</a-button>
               <a-button v-if="current == 2" type="primary" @click="next">开始融合</a-button>
@@ -20,7 +56,11 @@
 </template>
 
 <script>
-
+  function getBase64(img, callback) {
+    const reader = new FileReader();
+    reader.addEventListener('load', () => callback(reader.result));
+    reader.readAsDataURL(img);
+  }
 export default {
   name: 'App',
   components: {
@@ -46,6 +86,9 @@ export default {
           content: 'Last-content',
         },
       ],
+      loading: false,
+      imageUrlA: '',
+      imageUrlB: '',
     };
   },
   methods: {
@@ -54,6 +97,43 @@ export default {
     },
     prev() {
       this.current--;
+    },
+    handleChangeA(info) {
+      if (info.file.status === 'uploading') {
+        this.loading = true;
+        return;
+      }
+      if (info.file.status === 'done') {
+        // Get this url from response in real world.
+        getBase64(info.file.originFileObj, imageUrl => {
+          this.imageUrlA = imageUrl;
+          this.loading = false;
+        });
+      }
+    },
+    handleChangeB(info) {
+      if (info.file.status === 'uploading') {
+        this.loading = true;
+        return;
+      }
+      if (info.file.status === 'done') {
+        // Get this url from response in real world.
+        getBase64(info.file.originFileObj, imageUrl => {
+          this.imageUrlB = imageUrl;
+          this.loading = false;
+        });
+      }
+    },
+    beforeUpload(file) {
+      const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
+      if (!isJpgOrPng) {
+        this.$message.error('You can only upload JPG file!');
+      }
+      const isLt2M = file.size / 1024 / 1024 < 2;
+      if (!isLt2M) {
+        this.$message.error('Image must smaller than 2MB!');
+      }
+      return isJpgOrPng && isLt2M;
     },
   },
 }
@@ -66,7 +146,7 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+  margin-top: 10px;
 }
 
 .box {
@@ -81,13 +161,12 @@ export default {
 }
 
 .steps-content {
-  margin-top: 16px;
-  border: 1px dashed #e9e9e9;
-  border-radius: 6px;
-  background-color: #fafafa;
-  min-height: 200px;
-  text-align: center;
-  padding-top: 80px;
+    margin-top: 40px;
+    border: 1px dashed #e9e9e9;
+    border-radius: 6px;
+    background-color: #fafafa;
+    min-height: 580px;
+    text-align: center;
 }
 
 .steps-action {
@@ -102,4 +181,33 @@ export default {
     vertical-align: top;
 }
 .steps:last-child{flex:none;}
+
+.image-uploader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 128px;
+    height: 128px;
+}
+.image-uploader > .ant-upload {
+    width: 128px;
+    height: 128px;
+}
+.image-uploaded {
+    max-height: 500px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.ant-upload-select-picture-card i {
+    font-size: 32px;
+    color: #999;
+}
+
+.ant-upload-select-picture-card .ant-upload-text {
+    margin-top: 8px;
+    color: #666;
+}
 </style>

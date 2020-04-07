@@ -4,9 +4,10 @@ import {
   Steps,
   message,
   Upload,
+  Icon,
 //  Layout,
 //  Menu,
-//  Icon,
+//
 //  Select,
 //  TimePicker,
 //  DatePicker,
@@ -29,6 +30,7 @@ Vue.use(Button);
 Vue.use(Steps);
 Vue.use(message);
 Vue.use(Upload);
+Vue.use(Icon);
 
 Vue.prototype.$message = message;
 
