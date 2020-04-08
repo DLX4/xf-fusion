@@ -5,6 +5,10 @@ import {
   message,
   Upload,
   Icon,
+  Radio,
+  Input,
+  InputNumber,
+  Card,
 //  Layout,
 //  Menu,
 //
@@ -13,9 +17,9 @@ import {
 //  DatePicker,
 //  LocaleProvider,
 //  Table,
-//  input,
+
 //  Switch,
-//  Radio,
+
 
 //  checkbox,
 //  Transfer,
@@ -31,6 +35,10 @@ Vue.use(Steps);
 Vue.use(message);
 Vue.use(Upload);
 Vue.use(Icon);
+Vue.use(Radio);
+Vue.use(Input);
+Vue.use(InputNumber);
+Vue.use(Card);
 
 Vue.prototype.$message = message;
 

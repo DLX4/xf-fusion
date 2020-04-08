@@ -7,7 +7,7 @@
               <a-step class="steps" key="算法参数" title="算法参数" />
               <a-step class="steps" key="融合图像" title="融合图像" />
           </a-steps>
-          <div class="steps-content" v-if="current > 1">{{steps[current].content}}</div>
+          <!--<div class="steps-content" v-if="current > 2">{{steps[current].content}}</div>-->
           <div class="steps-content" v-if="current == 0">
               <a-upload
                       name="image"
@@ -43,6 +43,164 @@
                   </div>
               </a-upload>
           </div>
+
+          <div class="steps-content" v-if="current == 2">
+
+              <div class="params">
+                  <div class="params-row">
+                      <div class="params-label ">
+                          <label>红外融合策略（顶层）：</label>
+                      </div>
+
+                      <a-radio-group class="params-value" defaultValue="a" buttonStyle="solid">
+                          <a-radio-button value="a">区域能量</a-radio-button>
+                          <a-radio-button value="b">平均梯度</a-radio-button>
+                          <a-radio-button value="c">最大亮度</a-radio-button>
+                      </a-radio-group>
+                  </div>
+
+                  <div class="params-row">
+                      <div class="params-label ">
+                          <label>可视光融合策略（顶层）：</label>
+                      </div>
+
+                      <a-radio-group class="params-value" defaultValue="a" buttonStyle="solid">
+                          <a-radio-button value="a">显著性</a-radio-button>
+                          <a-radio-button value="b">区域能量</a-radio-button>
+                      </a-radio-group>
+                  </div>
+
+                  <div class="params-row">
+                      <div class="params-label ">
+                          <label>红外融合策略（非顶层）：</label>
+                      </div>
+
+                      <a-radio-group class="params-value" defaultValue="a" buttonStyle="solid">
+                          <a-radio-button value="a">区域能量</a-radio-button>
+                          <a-radio-button value="b">平均梯度</a-radio-button>
+                          <a-radio-button value="c">最大亮度</a-radio-button>
+                      </a-radio-group>
+                  </div>
+
+                  <div class="params-row">
+                      <div class="params-label ">
+                          <label>可视光融合策略（非顶层）：</label>
+                      </div>
+
+                      <a-radio-group class="params-value" defaultValue="a" buttonStyle="solid">
+                          <a-radio-button value="a">显著性</a-radio-button>
+                          <a-radio-button value="b">区域能量</a-radio-button>
+                      </a-radio-group>
+                  </div>
+
+                  <div class="params-row">
+                      <div class="params-label ">
+                          <label>LLF 层数：</label>
+                      </div>
+
+                      <div class="params-value">
+                          <a-input-number  v-model="level" :min="3" :max="5" />
+                      </div>
+
+                  </div>
+
+                  <div class="params-row">
+                      <div class="params-label ">
+                          <label>LLF-alpha：</label>
+                      </div>
+
+                      <div class="params-value">
+                          <a-input-number  v-model="alpha" :min="-10" :max="10" :step="0.1" />
+                      </div>
+
+                  </div>
+
+                  <div class="params-row">
+                      <div class="params-label ">
+                          <label>LLF-beta：</label>
+                      </div>
+
+                      <div class="params-value">
+                          <a-input-number  v-model="beta" :min="-10" :max="10" :step="0.1" />
+                      </div>
+
+                  </div>
+
+                  <div class="params-row">
+                      <div class="params-label ">
+                          <label>LLF-sigma：</label>
+                      </div>
+
+                      <div class="params-value">
+                          <a-input-number  v-model="sigma" :min="-10" :max="10" :step="0.1" />
+                      </div>
+                  </div>
+
+                  <div class="params-row">
+                      <div class="params-label ">
+                          <label>显著性偏差：</label>
+                      </div>
+
+                      <div class="params-value">
+                          <a-input-number  v-model="dalta" :min="-10" :max="10" :step="0.1" />
+                      </div>
+                  </div>
+              </div>
+
+          </div>
+
+          <div class="steps-content" v-if="current == 3">
+              <div class="card-wrapper">
+                  <div class="card">
+                      <a-card hoverable style="width: 250px">
+                          <img
+                                  alt="example"
+                                  src="https://os.alipayobjects.com/rmsportal/QBnOOoLaAfKPirc.png"
+                                  slot="cover"
+                          />
+                          <a-card-meta >
+                              <template slot="description"
+                              >输入可见光图像</template
+                              >
+                          </a-card-meta>
+                      </a-card>
+                  </div>
+
+                  <div class="card">
+                      <a-card hoverable style="width: 250px">
+                          <img
+                                  alt="example"
+                                  src="https://os.alipayobjects.com/rmsportal/QBnOOoLaAfKPirc.png"
+                                  slot="cover"
+                          />
+                          <a-card-meta >
+                              <template slot="description"
+                              >输入红外图像</template
+                              >
+                          </a-card-meta>
+                      </a-card>
+                  </div>
+
+
+                  <div class="card">
+                      <a-card hoverable style="width: 250px">
+                          <img
+                                  alt="example"
+                                  src="https://os.alipayobjects.com/rmsportal/QBnOOoLaAfKPirc.png"
+                                  slot="cover"
+                          />
+                          <a-card-meta >
+                              <template slot="description"
+                              >融合图像</template
+                              >
+                          </a-card-meta>
+                      </a-card>
+                  </div>
+              </div>
+
+
+          </div>
+
 
           <div class="steps-action">
               <a-button v-if="current<2" type="primary" @click="next">下一步</a-button>
@@ -89,6 +247,11 @@ export default {
       loading: false,
       imageUrlA: '',
       imageUrlB: '',
+      alpha: 1,
+      beta: 1,
+      sigma: 1,
+      dalta: 1,
+      level: 3,
     };
   },
   methods: {
@@ -182,6 +345,34 @@ export default {
 }
 .steps:last-child{flex:none;}
 
+.params {
+    width: 600px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.params-label {
+    width: 200px;
+    float: left;
+    text-align: right;
+    color: rgb(51, 51, 51);
+    margin-bottom: 0;
+}
+
+.params-value {
+    width: 350px;
+    text-align: left;
+}
+
+.params-row {
+    display: flex;
+    height: 40px;
+    flex-wrap: wrap;
+    line-height: 40px;
+}
+
 .image-uploader {
     position: absolute;
     top: 50%;
@@ -209,5 +400,22 @@ export default {
 .ant-upload-select-picture-card .ant-upload-text {
     margin-top: 8px;
     color: #666;
+}
+
+
+.card-wrapper {
+    flex-wrap: wrap;
+    display: flex;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    padding: 42px 24px 50px;
+}
+.card {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
 }
 </style>
