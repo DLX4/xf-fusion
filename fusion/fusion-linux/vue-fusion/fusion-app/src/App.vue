@@ -14,11 +14,11 @@
                       listType="picture-card"
                       class="image-uploader"
                       :showUploadList="false"
-                      action="https://www.mocky.io/v2/5cc8019d300000980a055e76"
+                      action="http://localhost:8088/fileUpload"
                       :beforeUpload="beforeUpload"
                       @change="handleChangeA"
               >
-                  <img class="image-uploaded" v-if="imageUrlA" :src="imageUrlA" alt="image" />
+                  <img class="image-uploaded" v-if="fusion.imageUrlA" :src="fusion.imageUrlA" alt="image" />
                   <div v-else>
                       <a-icon :type="loading ? 'loading' : 'plus'" />
                       <div class="ant-upload-text">Upload</div>
@@ -32,11 +32,11 @@
                       listType="picture-card"
                       class="image-uploader"
                       :showUploadList="false"
-                      action="https://www.mocky.io/v2/5cc8019d300000980a055e76"
+                      action="http://localhost:8088/fileUpload"
                       :beforeUpload="beforeUpload"
                       @change="handleChangeB"
               >
-                  <img class="image-uploaded" v-if="imageUrlB" :src="imageUrlB" alt="image" />
+                  <img class="image-uploaded" v-if="fusion.imageUrlB" :src="fusion.imageUrlB" alt="image" />
                   <div v-else>
                       <a-icon :type="loading ? 'loading' : 'plus'" />
                       <div class="ant-upload-text">Upload</div>
@@ -99,7 +99,7 @@
                       </div>
 
                       <div class="params-value">
-                          <a-input-number  v-model="level" :min="3" :max="5" />
+                          <a-input-number  v-model="fusion.level" :min="3" :max="5" />
                       </div>
 
                   </div>
@@ -110,7 +110,7 @@
                       </div>
 
                       <div class="params-value">
-                          <a-input-number  v-model="alpha" :min="-10" :max="10" :step="0.1" />
+                          <a-input-number  v-model="fusion.alpha" :min="-10" :max="10" :step="0.1" />
                       </div>
 
                   </div>
@@ -121,7 +121,7 @@
                       </div>
 
                       <div class="params-value">
-                          <a-input-number  v-model="beta" :min="-10" :max="10" :step="0.1" />
+                          <a-input-number  v-model="fusion.beta" :min="-10" :max="10" :step="0.1" />
                       </div>
 
                   </div>
@@ -132,7 +132,7 @@
                       </div>
 
                       <div class="params-value">
-                          <a-input-number  v-model="sigma" :min="-10" :max="10" :step="0.1" />
+                          <a-input-number  v-model="fusion.sigma" :min="-10" :max="10" :step="0.1" />
                       </div>
                   </div>
 
@@ -142,7 +142,7 @@
                       </div>
 
                       <div class="params-value">
-                          <a-input-number  v-model="dalta" :min="-10" :max="10" :step="0.1" />
+                          <a-input-number  v-model="fusion.dalta" :min="-10" :max="10" :step="0.1" />
                       </div>
                   </div>
               </div>
@@ -204,7 +204,7 @@
 
           <div class="steps-action">
               <a-button v-if="current<2" type="primary" @click="next">下一步</a-button>
-              <a-button v-if="current == 2" type="primary" @click="next">开始融合</a-button>
+              <a-button v-if="current == 2" type="primary" :loading="fusionLoading" @click="doFusion">开始融合</a-button>
               <a-button v-if="current == 3" type="primary" @click="$message.success('Processing complete!')">完成</a-button>
               <a-button v-if="current>0" style="margin-left: 8px" @click="prev">上一步</a-button>
           </div>
@@ -214,11 +214,13 @@
 </template>
 
 <script>
-  function getBase64(img, callback) {
-    const reader = new FileReader();
-    reader.addEventListener('load', () => callback(reader.result));
-    reader.readAsDataURL(img);
-  }
+  // function getBase64(img, callback) {
+  //   const reader = new FileReader();
+  //   reader.addEventListener('load', () => callback(reader.result));
+  //   reader.readAsDataURL(img);
+  // }
+import axios from 'axios';
+
 export default {
   name: 'App',
   components: {
@@ -245,16 +247,42 @@ export default {
         },
       ],
       loading: false,
-      imageUrlA: '',
-      imageUrlB: '',
-      alpha: 1,
-      beta: 1,
-      sigma: 1,
-      dalta: 1,
-      level: 3,
+      fusionLoading: false,
+      fusion : {
+        imageUrlA: '',
+        imageUrlB: '',
+        alpha: 1,
+        beta: 1,
+        sigma: 1,
+        dalta: 1,
+        level: 3,
+      }
     };
   },
   methods: {
+    // Pushes posts to the server when called.
+    doFusion() {
+      this.fusionLoading = true;
+      axios.post(`http://localhost:8088/fusion`, this.fusion)
+        .then(response => {
+          this.fusionLoading = true;
+          this.current++;
+          console.log(response)
+        })
+        .catch(e => {
+          console.log(e)
+        })
+
+      // async / await version (postPost() becomes async postPost())
+      //
+      // try {
+      //   await axios.post(`http://jsonplaceholder.typicode.com/posts`, {
+      //     body: this.postBody
+      //   })
+      // } catch (e) {
+      //   this.errors.push(e)
+      // }
+    },
     next() {
       this.current++;
     },
@@ -262,29 +290,25 @@ export default {
       this.current--;
     },
     handleChangeA(info) {
+      console.log(info)
       if (info.file.status === 'uploading') {
         this.loading = true;
         return;
       }
       if (info.file.status === 'done') {
-        // Get this url from response in real world.
-        getBase64(info.file.originFileObj, imageUrl => {
-          this.imageUrlA = imageUrl;
-          this.loading = false;
-        });
+        this.fusion.imageUrlA = "http://localhost:8088/show?fileName=" + info.file.response.fileName;
+        this.loading = false;
       }
     },
     handleChangeB(info) {
+
       if (info.file.status === 'uploading') {
         this.loading = true;
         return;
       }
       if (info.file.status === 'done') {
-        // Get this url from response in real world.
-        getBase64(info.file.originFileObj, imageUrl => {
-          this.imageUrlB = imageUrl;
-          this.loading = false;
-        });
+        this.fusion.imageUrlB = "http://localhost:8088/show?fileName=" + info.file.response.fileName;
+        this.loading = false;
       }
     },
     beforeUpload(file) {
