@@ -265,7 +265,7 @@ export default {
       this.fusionLoading = true;
       axios.post(`http://localhost:8088/fusion`, this.fusion)
         .then(response => {
-          this.fusionLoading = true;
+          this.fusionLoading = false;
           this.current++;
           console.log(response)
         })
