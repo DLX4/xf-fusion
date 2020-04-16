@@ -72,7 +72,7 @@ public class FusionController {
     }
 
     /**
-     * 显示单张图片
+     * 融合
      *
      * @return
      */

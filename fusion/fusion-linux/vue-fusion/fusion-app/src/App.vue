@@ -95,6 +95,17 @@
 
                   <div class="params-row">
                       <div class="params-label ">
+                          <label>LLF 采样数：</label>
+                      </div>
+
+                      <div class="params-value">
+                          <a-input-number  v-model="fusion.sampling" :min="5" :max="100" />
+                      </div>
+
+                  </div>
+
+                  <div class="params-row">
+                      <div class="params-label ">
                           <label>LLF 层数：</label>
                       </div>
 
@@ -256,6 +267,7 @@ export default {
         sigma: 1,
         dalta: 1,
         level: 3,
+        sampling: 10
       }
     };
   },
