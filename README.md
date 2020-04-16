@@ -1,5 +1,15 @@
 # 红外-可视光图像融合算法设计与实现
 
+### 应用效果
+
+![](docs/show1.png)
+
+
+
+![](docs/show2.png)
+
+
+
 ### 工程概览
 
 **fusion**：windows环境下基于opencv + QT的算法实现
