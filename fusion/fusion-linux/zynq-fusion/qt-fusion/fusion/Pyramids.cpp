@@ -8,6 +8,15 @@
 #include <fstream>
 #include <time.h>
 #include <numeric>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <dirent.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <map>
+
 
 using namespace std;
 using namespace cv;
@@ -1270,7 +1279,7 @@ int blendLLF()
     return 0;
 }
 
-int blendFasterLLF()
+int blendFasterLLF(char* img1, char* img2, char* imgDst)
 {
     LapPyr LA;
     LapPyr LB;
@@ -1279,41 +1288,178 @@ int blendFasterLLF()
     // AVATAR_PATH IMG1_PATH
 
     // 图像A 拉普拉斯金字塔
-    Mat srcA = imread(IMG1);
+    Mat srcA = imread(img1);
 
     LA = buildLaplacianPyramidsFasterLLF(srcA);
-    showLaplacianPyramids(LA, "LLF_A_");
+    // showLaplacianPyramids(LA, "LLF_A_");
 
     // 图像B 拉普拉斯金字塔
-    Mat srcB = imread(IMG2);
+    Mat srcB = imread(img2);
     LB = buildLaplacianPyramidsFasterLLF(srcB);
-    showLaplacianPyramids(LB, "LLF_B_");
+    // showLaplacianPyramids(LB, "LLF_B_");
 
     Mat dst3;
     blendLaplacianPyramids(LA, LB, LS, dst3, 3, "LLF_S_");
     // restoreBrightness(dst3);
-    imshow("faster llf", dst3);
+    imwrite(imgDst, dst3);
 
     return 0;
 }
 
-int main()
-{
+void doFusion(char* imageA, char* imageB, char* imageS) {
     clock_t start, end;
     start = clock();
-    blendLp();
-    end = clock();
-    cout << "lp time:" << (double)(end - start) / CLOCKS_PER_SEC << "S" << endl;
 
     start = clock();
-    blendLLF();
-    end = clock();
-    cout << "LLF time:" << (double)(end - start) / CLOCKS_PER_SEC << "S" << endl;
-
-    start = clock();
-    blendFasterLLF();
+    blendFasterLLF(imageA, imageB, imageS);
     end = clock();
     cout << "faster LLF time:" << (double)(end - start) / CLOCKS_PER_SEC << "S" << endl;
+}
 
-    waitKey(0);
+// 注意注意注意，后来我发现这个函数有坑，请参考：https://blog.csdn.net/stpeace/article/details/73472576
+void deleteAllMark(string &s, const string &mark)
+{
+    unsigned int nMarkSize = mark.size();
+    while(1)
+    {
+        unsigned int pos = s.find(mark);
+        if(pos == string::npos || pos == 4294967295)
+        {
+            return;
+        }
+
+        s.erase(pos, nMarkSize);
+    }
+}
+
+int getConfigInfoFromFile(const string &filename, map<string, string> &mapInfo)
+{
+    ifstream in(filename.c_str());
+    string line;
+    if(in)
+    {
+        while (getline (in, line))  // line不包含'\n'
+        {
+            // 去掉注释
+            int pos = line.find("//");
+            if(pos != string::npos && pos != 4294967295)
+            {
+                line.erase(pos, line.size() - pos);
+            }
+
+            deleteAllMark(line, " ");
+            deleteAllMark(line, "\t");
+
+            pos = line.find("=");
+            if(pos == string::npos)
+            {
+                continue;
+            }
+
+            string key = line.substr(0, pos);
+            string value = line.substr(pos, line.size() - pos);
+            value.erase(0, 1);
+
+            // 兼容Windows直接复制过来的文件(非常重要)
+            unsigned int nSize = value.size();
+            if(nSize > 0 && value[nSize - 1] == '\r')
+            {
+                value = value.substr(0, nSize - 1);
+            }
+
+            if(!key.empty() && !value.empty())
+            {
+                mapInfo[key] = value;
+            }
+        }
+
+        return 0;
+    }
+
+    return -1;
+}
+
+
+map<string, string> parseConfig(const string & filename)
+{
+    map<string, string> mapInfo;
+    int iRet = getConfigInfoFromFile(filename, mapInfo);
+    if(iRet != 0)
+    {
+        cout << "file error" << endl;
+        return mapInfo;
+    }
+
+    for(map<string, string>::iterator it = mapInfo.begin(); it != mapInfo.end(); ++it)
+    {
+        cout << it->first << "=" << it->second << endl;
+    }
+
+    return mapInfo;
+}
+
+
+//列出config目录下所有文件
+void scan_ftp_dir( const char * config_dir_name,
+                   const char * source_dir_name,
+                   const char* fusion_dir_name)
+{
+
+    struct stat s;
+    lstat( config_dir_name , &s );
+    if( ! S_ISDIR( s.st_mode ) )
+    {
+        return;
+    }
+
+    struct dirent * filename;
+    DIR * dir;
+    dir = opendir( config_dir_name );
+    if( NULL == dir )
+    {
+        return;
+    }
+
+    while( ( filename = readdir(dir) ) != NULL )
+    {
+        if( strcmp( filename->d_name , "." ) == 0 ||
+            strcmp( filename->d_name , "..") == 0)
+            continue;
+
+        char pathConfig[256] = {0};
+        sprintf(pathConfig, "%s/%s", config_dir_name, filename->d_name);
+
+        cout << "config file = " << pathConfig << endl;
+        map<string, string> configMap = parseConfig(pathConfig);
+        string imageA = configMap.find("imageA")->second;
+        string imageB = configMap.find("imageB")->second;
+        string imageFusion = configMap.find("imageFusion")->second;
+
+        char pathImageA[256] = {0};
+        sprintf(pathImageA, "%s/%s", source_dir_name, imageA.c_str());
+        cout << "imageA path = " << pathImageA << endl;
+
+        char pathImageB[256] = {0};
+        sprintf(pathImageB, "%s/%s", source_dir_name, imageB.c_str());
+        cout << "imageB path = " << pathImageB << endl;
+
+        char pathImageFusion[256] = {0};
+        sprintf(pathImageFusion, "%s/%s", fusion_dir_name, imageFusion.c_str());
+        cout << "imageFusion path = " << pathImageFusion << endl;
+
+        doFusion(pathImageA, pathImageB, pathImageFusion);
+
+        remove(pathConfig);
+    }
+}
+
+int main(int argc, char *argv[])
+{
+    while(1) {
+        scan_ftp_dir("/home/dlx/ftp/config",
+                     "/home/dlx/ftp/source",
+                     "/home/dlx/ftp/fusion");
+        sleep(1);
+    }
+
 }

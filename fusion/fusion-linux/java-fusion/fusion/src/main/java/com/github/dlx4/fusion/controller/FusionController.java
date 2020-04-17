@@ -102,9 +102,8 @@ public class FusionController {
     public ResponseEntity fusion(@RequestBody FusionParams params) throws IOException, InterruptedException {
 
         // 目标融合图像文件
-        // TODO
-        // params.setImageFusion(FileUtils.generateRandomFileName("fusion.jpg"));
-        params.setImageFusion("123.jpg");
+        params.setImageFusion(FileUtils.generateRandomFileName("fusion" + params.getImageA()));
+        // params.setImageFusion("123.jpg");
         params.setConfig(FileUtils.generateRandomFileName("fusion.config"));
         FusionImageFtpClient fusionImageFtpClient = new FusionImageFtpClient(
                 ftpHost,
