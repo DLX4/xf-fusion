@@ -49,47 +49,23 @@
               <div class="params">
                   <div class="params-row">
                       <div class="params-label ">
-                          <label>红外融合策略（顶层）：</label>
+                          <label>顶层（低频）融合策略：</label>
                       </div>
 
                       <a-radio-group class="params-value" defaultValue="a" buttonStyle="solid">
                           <a-radio-button value="a">区域能量</a-radio-button>
-                          <a-radio-button value="b">平均梯度</a-radio-button>
-                          <a-radio-button value="c">最大亮度</a-radio-button>
+                          <a-radio-button value="b">视觉显著性</a-radio-button>
+                          <a-radio-button value="c">平均梯度</a-radio-button>
                       </a-radio-group>
                   </div>
 
                   <div class="params-row">
                       <div class="params-label ">
-                          <label>可视光融合策略（顶层）：</label>
-                      </div>
-
-                      <a-radio-group class="params-value" defaultValue="a" buttonStyle="solid">
-                          <a-radio-button value="a">显著性</a-radio-button>
-                          <a-radio-button value="b">区域能量</a-radio-button>
-                      </a-radio-group>
-                  </div>
-
-                  <div class="params-row">
-                      <div class="params-label ">
-                          <label>红外融合策略（非顶层）：</label>
+                          <label>非顶层（高频）融合策略：</label>
                       </div>
 
                       <a-radio-group class="params-value" defaultValue="a" buttonStyle="solid">
                           <a-radio-button value="a">区域能量</a-radio-button>
-                          <a-radio-button value="b">平均梯度</a-radio-button>
-                          <a-radio-button value="c">最大亮度</a-radio-button>
-                      </a-radio-group>
-                  </div>
-
-                  <div class="params-row">
-                      <div class="params-label ">
-                          <label>可视光融合策略（非顶层）：</label>
-                      </div>
-
-                      <a-radio-group class="params-value" defaultValue="a" buttonStyle="solid">
-                          <a-radio-button value="a">显著性</a-radio-button>
-                          <a-radio-button value="b">区域能量</a-radio-button>
                       </a-radio-group>
                   </div>
 
