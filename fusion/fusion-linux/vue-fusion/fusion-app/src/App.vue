@@ -166,7 +166,7 @@
                       <a-card hoverable style="width: 250px">
                           <img
                                   alt="example"
-                                  src="https://os.alipayobjects.com/rmsportal/QBnOOoLaAfKPirc.png"
+                                  v-if="fusion.imageUrlA" :src="fusion.imageUrlA"
                                   slot="cover"
                           />
                           <a-card-meta >
@@ -181,7 +181,7 @@
                       <a-card hoverable style="width: 250px">
                           <img
                                   alt="example"
-                                  src="https://os.alipayobjects.com/rmsportal/QBnOOoLaAfKPirc.png"
+                                  v-if="fusion.imageUrlB" :src="fusion.imageUrlB"
                                   slot="cover"
                           />
                           <a-card-meta >
@@ -197,7 +197,7 @@
                       <a-card hoverable style="width: 250px">
                           <img
                                   alt="example"
-                                  src="https://os.alipayobjects.com/rmsportal/QBnOOoLaAfKPirc.png"
+                                  v-if="fusion.imageUrlS" :src="fusion.imageUrlS"
                                   slot="cover"
                           />
                           <a-card-meta >
@@ -262,6 +262,9 @@ export default {
       fusion : {
         imageUrlA: '',
         imageUrlB: '',
+        imageUrlS: '',
+        imageA: '',
+        imageB: '',
         alpha: 1,
         beta: 1,
         sigma: 1,
@@ -280,6 +283,7 @@ export default {
           this.fusionLoading = false;
           this.current++;
           console.log(response)
+          this.fusion.imageUrlS = "http://localhost:8088/show?fileName=" + response.data.fileName;
         })
         .catch(e => {
           console.log(e)
@@ -309,6 +313,7 @@ export default {
       }
       if (info.file.status === 'done') {
         this.fusion.imageUrlA = "http://localhost:8088/show?fileName=" + info.file.response.fileName;
+        this.fusion.imageA = info.file.response.fileName;
         this.loading = false;
       }
     },
@@ -320,6 +325,7 @@ export default {
       }
       if (info.file.status === 'done') {
         this.fusion.imageUrlB = "http://localhost:8088/show?fileName=" + info.file.response.fileName;
+        this.fusion.imageB = info.file.response.fileName;
         this.loading = false;
       }
     },

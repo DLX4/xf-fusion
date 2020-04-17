@@ -1,13 +1,17 @@
 package com.github.dlx4.fusion.utils;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 
 /**
- * 文件上传工具包
+ * 文件相关的工具类
+ * @author dinglingxiang
  */
+@Slf4j
 public class FileUtils {
 
     /**
@@ -30,13 +34,60 @@ public class FileUtils {
             return true;
         } catch (IllegalStateException e) {
             e.printStackTrace();
+            log.error("error: {}", e.getMessage(), e);
             return false;
         } catch (IOException e) {
             e.printStackTrace();
+            log.error("error: {}", e.getMessage(), e);
             return false;
         }
 
     }
 
+    /**
+     * 获取文件后缀
+     *
+     * @param fileName
+     * @return
+     */
+    public static String getSuffix(String fileName) {
+        return fileName.substring(fileName.lastIndexOf("."));
+    }
 
+    /**
+     * 生成新的文件名
+     *
+     * @param fileOriginName 源文件名
+     * @return
+     */
+    public static String generateRandomFileName(String fileOriginName) {
+        return UUIDUtils.getUUID() + FileUtils.getSuffix(fileOriginName);
+    }
+
+    /**
+     * 将字符串内容写入到某个文件
+     * @param       path
+     * @param       content
+     * @return void
+     */
+    public static void writeFile(String path, String content) {
+        try {
+
+            File file = new File(path);
+
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+
+            FileWriter fileWriter = new FileWriter(file, true);
+
+            fileWriter.write(content);
+            fileWriter.flush();
+            fileWriter.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            log.error("error: {}", e.getMessage(), e);
+        }
+    }
 }
