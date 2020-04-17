@@ -2,11 +2,11 @@
 
 ### 应用效果
 
-![](docs/show1.png)
+![](docs/show1.PNG)
 
 
 
-![](docs/show2.png)
+![](docs/show2.PNG)
 
 
 
