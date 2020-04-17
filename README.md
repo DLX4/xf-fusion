@@ -2,6 +2,8 @@
 
 ### 应用效果
 
+![](docs/show.gif)
+
 ![](docs/show1.PNG)
 
 
