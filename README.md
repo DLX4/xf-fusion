@@ -4,11 +4,11 @@
 
 ![](docs/show.gif)
 
-![](docs/show1.PNG)
 
 
+![](docs/show3.PNG)
 
-![](docs/show2.PNG)
+
 
 
 
