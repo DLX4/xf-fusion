@@ -91,12 +91,16 @@ public class FusionImageFtpClient {
      * 处理融合
      */
     public void doFusion() throws IOException, InterruptedException {
+        // 上传融合输入文件
         uploadSourceImage();
+        // 上传融合任务config文件
         uploadFusionConfig();
+        // 轮询融合任务是否完成
         while (!poll()) {
             // 等一等
             Thread.sleep(1000);
         }
+        // 下载融合输出图像
         download();
     }
 

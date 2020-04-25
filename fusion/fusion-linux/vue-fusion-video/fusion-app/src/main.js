@@ -9,6 +9,8 @@ import {
   Input,
   InputNumber,
   Card,
+  Row,
+  Col
 } from "ant-design-vue";
 import 'ant-design-vue/dist/antd.css';
 import App from './App.vue'
@@ -22,6 +24,8 @@ Vue.use(Radio);
 Vue.use(Input);
 Vue.use(InputNumber);
 Vue.use(Card);
+Vue.use(Row);
+Vue.use(Col);
 
 Vue.prototype.$message = message;
 
