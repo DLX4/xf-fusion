@@ -48,31 +48,33 @@
                     </a-col>
                     <a-col :span="8">
                         <div class="content">
-                            <div class="params">
+
+                            <a-divider>融合模式</a-divider>
+
+                            <div class="params-mode">
                                 <div class="middle">
                                     <div class="params-row">
                                         <div class="params-label ">
-                                            <label>顶层（低频）融合策略：</label>
+                                            <label>融合模式：</label>
                                         </div>
 
-                                        <a-radio-group class="params-value" defaultValue="a" buttonStyle="solid">
-                                            <a-radio-button value="a">区域能量</a-radio-button>
-                                            <a-radio-button value="b">视觉显著性</a-radio-button>
-                                            <a-radio-button value="c">平均梯度</a-radio-button>
+                                        <a-radio-group class="params-value" defaultValue="a" buttonStyle="solid"
+                                                       v-model="fusion.mode">
+                                            <a-radio-button value="a">高性能</a-radio-button>
+                                            <a-radio-button value="b">高质量</a-radio-button>
+                                            <a-radio-button value="c">普通</a-radio-button>
                                         </a-radio-group>
                                     </div>
+                                </div>
+                            </div>
 
-                                    <div class="params-row">
-                                        <div class="params-label ">
-                                            <label>非顶层（高频）融合策略：</label>
-                                        </div>
+                            <a-divider>融合参数</a-divider>
 
-                                        <a-radio-group class="params-value" defaultValue="a" buttonStyle="solid">
-                                            <a-radio-button value="a">区域能量</a-radio-button>
-                                        </a-radio-group>
-                                    </div>
+                            <div class="params">
 
-                                    <div class="params-row">
+                                <div class="middle">
+
+                                    <div v-show="fusion.mode == 'b'" class="params-row">
                                         <div class="params-label ">
                                             <label>LLF 采样数：</label>
                                         </div>
@@ -83,7 +85,7 @@
 
                                     </div>
 
-                                    <div class="params-row">
+                                    <div v-show="fusion.mode == 'b'" class="params-row">
                                         <div class="params-label ">
                                             <label>LLF 层数：</label>
                                         </div>
@@ -94,7 +96,7 @@
 
                                     </div>
 
-                                    <div class="params-row">
+                                    <div v-show="fusion.mode == 'b'" class="params-row">
                                         <div class="params-label ">
                                             <label>LLF-alpha：</label>
                                         </div>
@@ -105,7 +107,7 @@
 
                                     </div>
 
-                                    <div class="params-row">
+                                    <div v-show="fusion.mode == 'b'" class="params-row">
                                         <div class="params-label ">
                                             <label>LLF-beta：</label>
                                         </div>
@@ -116,7 +118,7 @@
 
                                     </div>
 
-                                    <div class="params-row">
+                                    <div v-show="fusion.mode == 'b'" class="params-row">
                                         <div class="params-label ">
                                             <label>LLF-sigma：</label>
                                         </div>
@@ -126,7 +128,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="params-row">
+                                    <div v-show="fusion.mode == 'b'" class="params-row">
                                         <div class="params-label ">
                                             <label>显著性偏差：</label>
                                         </div>
@@ -135,13 +137,50 @@
                                             <a-input-number v-model="fusion.dalta" :min="-10" :max="10" :step="0.1"/>
                                         </div>
                                     </div>
+                                    <div v-show="fusion.mode == 'c'" class="params-row">
+                                        <div class="params-label ">
+                                            <label>金字塔层数：</label>
+                                        </div>
+
+                                        <div class="params-value">
+                                            <a-input-number v-model="fusion.levelxx" :min="3" :max="5"/>
+                                        </div>
+                                    </div>
+
                                 </div>
 
                             </div>
 
+
+                            <a-divider>实时状态</a-divider>
+                            <div class="status">
+                                <div class="middle">
+
+                                    <div class="params-row">
+                                        <div class="params-label ">
+                                            <label>FPS：</label>
+                                        </div>
+                                        <div class="params-value ">
+                                            <label>{{status.fps}}帧/秒</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="params-row">
+                                        <div class="params-label ">
+                                            <label>平均时延：</label>
+                                        </div>
+                                        <div class="params-value ">
+                                            <label>{{status.delay}}毫秒</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <a-divider>控制按钮</a-divider>
+
                             <div class="control-button">
                                 <div class="middle">
-                                    <a-row >
+                                    <a-row>
                                         <a-col :span="12">
                                             <a-button type="primary" :loading="fusionLoading" @click="doFusion">开始采集
                                             </a-button>
@@ -151,10 +190,7 @@
                                             <a-button @click="$message.success('Processing complete!')">停止</a-button>
                                         </a-col>
                                     </a-row>
-
                                 </div>
-
-
                             </div>
                         </div>
                     </a-col>
@@ -228,7 +264,12 @@
           sigma: 1,
           dalta: 1,
           level: 3,
-          sampling: 10
+          sampling: 10,
+          mode: 'a'
+        },
+        status: {
+          fps:1,
+          delay:889
         }
       };
     },
@@ -343,14 +384,28 @@
 
     .control-button {
         position: relative;
-        height: 30%;
+        height: 10%;
         width: 550px;
+    }
+
+    .status {
+        position: relative;
+        height: 5%;
+        width: 100%;
     }
 
     .params {
         position: relative;
-        height: 70%;
+        height: 45%;
         width: 100%;
+        /*border: 1px solid #ebedf0;*/
+    }
+
+    .params-mode {
+        position: relative;
+        height: 10%;
+        width: 100%;
+        /*border: 1px solid #ebedf0;*/
     }
 
     /*    .steps-action {
@@ -385,7 +440,7 @@
     }
 
     .params-value {
-        width: 350px;
+        width: 250px;
         text-align: left;
     }
 

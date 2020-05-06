@@ -10,7 +10,8 @@ import {
   InputNumber,
   Card,
   Row,
-  Col
+  Col,
+  Divider
 } from "ant-design-vue";
 import 'ant-design-vue/dist/antd.css';
 import App from './App.vue'
@@ -26,6 +27,7 @@ Vue.use(InputNumber);
 Vue.use(Card);
 Vue.use(Row);
 Vue.use(Col);
+Vue.use(Divider);
 
 Vue.prototype.$message = message;
 
