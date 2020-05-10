@@ -2,11 +2,9 @@
 
 ### 应用效果
 
+![](docs/show2.gif)
+
 ![](docs/show.gif)
-
-
-
-![](docs/show3.PNG)
 
 
 

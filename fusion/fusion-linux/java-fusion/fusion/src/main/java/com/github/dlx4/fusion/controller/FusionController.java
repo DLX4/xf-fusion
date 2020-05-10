@@ -2,11 +2,15 @@ package com.github.dlx4.fusion.controller;
 
 import com.github.dlx4.fusion.ftp.FusionImageFtpClient;
 import com.github.dlx4.fusion.model.FusionParams;
+import com.github.dlx4.fusion.model.FusionResponse;
 import com.github.dlx4.fusion.utils.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -126,5 +130,41 @@ public class FusionController {
         map.put("fileName", params.getImageFusion());
 
         return ResponseEntity.ok(map);
+    }
+
+    /**
+     *
+     * @param params
+     * @return
+     */
+    @MessageMapping("/export")
+    // @SendToUser("/topic/zhcx")
+    @SendTo("/topic/zhcx")
+    public FusionResponse doFusion(FusionParams params) throws IOException, InterruptedException {
+        // 目标融合图像文件
+        params.setImageFusion(FileUtils.generateRandomFileName("fusion" + params.getImageA()));
+
+        params.setConfig(FileUtils.generateRandomFileName("fusion.config"));
+        FusionImageFtpClient fusionImageFtpClient = new FusionImageFtpClient(
+                ftpHost,
+                ftpPort,
+                ftpUsername,
+                ftpPassword,
+                sourceDirectory,
+                fusionDirectory,
+                configDirectory,
+                path,
+                params
+        );
+
+        fusionImageFtpClient.doFusion();
+        fusionImageFtpClient.close();
+
+        FusionResponse response = new FusionResponse();
+        response.setImageFusion(params.getImageFusion());
+        response.setImageA(params.getImageA());
+        response.setImageB(params.getImageB());
+        // 显示图片
+        return response;
     }
 }

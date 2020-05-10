@@ -165,14 +165,14 @@
                                         </div>
                                     </div>
 
-                                    <div class="params-row">
-                                        <div class="params-label ">
-                                            <label>平均时延：</label>
-                                        </div>
-                                        <div class="params-value ">
-                                            <label>{{status.delay}}毫秒</label>
-                                        </div>
-                                    </div>
+                                    <!--<div class="params-row">-->
+                                        <!--<div class="params-label ">-->
+                                            <!--<label>平均时延：</label>-->
+                                        <!--</div>-->
+                                        <!--<div class="params-value ">-->
+                                            <!--<label>{{status.delay}}毫秒</label>-->
+                                        <!--</div>-->
+                                    <!--</div>-->
                                 </div>
                             </div>
 
@@ -223,8 +223,9 @@
   //   reader.addEventListener('load', () => callback(reader.result));
   //   reader.readAsDataURL(img);
   // }
-  import axios from 'axios';
   import ACol from "ant-design-vue/es/grid/Col";
+  import SockJS from "sockjs-client";
+  import Stomp from "stompjs";
 
   export default {
     name: 'App',
@@ -270,33 +271,42 @@
         status: {
           fps:1,
           delay:889
-        }
+        },
+        socket: null,
+        stompClient: null
       };
     },
     methods: {
       // Pushes posts to the server when called.
       doFusion() {
-        this.fusionLoading = true;
-        axios.post(`http://localhost:8088/fusion`, this.fusion)
-          .then(response => {
-            this.fusionLoading = false;
-            this.current++;
-            console.log(response)
-            this.fusion.imageUrlS = "http://localhost:8088/show?fileName=" + response.data.fileName;
-          })
-          .catch(e => {
-            console.log(e)
-          })
+        var that = this;
+        that.fusionLoading = true;
+        that.socket = new SockJS("/ws/zhcx-export-websocket");
+        // that.socket = new SockJS("ws://localhost:8088/zhcx-export-websocket");
+        that.stompClient = Stomp.over(that.socket);
 
-        // async / await version (postPost() becomes async postPost())
-        //
-        // try {
-        //   await axios.post(`http://jsonplaceholder.typicode.com/posts`, {
-        //     body: this.postBody
-        //   })
-        // } catch (e) {
-        //   this.errors.push(e)
-        // }
+        that.stompClient.connect({}, function() {
+          console.log("连接成功");
+          that.stompClient.subscribe("/topic/zhcx", function(res) {
+            let response = JSON.parse(res.body);
+            console.log(response);
+            that.fusion.imageUrlA = "http://localhost:8088/show?fileName=" + response.imageA;
+            that.fusion.imageUrlB = "http://localhost:8088/show?fileName=" + response.imageB;
+            that.fusion.imageUrlS = "http://localhost:8088/show?fileName=" + response.imageFusion;
+
+          });
+
+          // var sessionId = /\/([^\/]+)\/websocket/.exec(
+          //   that.socket._transport.url
+          // )[1];
+          // that.stompClient.subscribe(
+          //   "/user/" + sessionId + "/topic/zhcx",
+          //   function(res) {
+          //     console.log(res)
+          //   }
+          // );
+        });
+
       },
       next() {
         this.current++;

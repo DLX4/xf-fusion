@@ -16,6 +16,7 @@ import {
 import 'ant-design-vue/dist/antd.css';
 import App from './App.vue'
 
+Vue.config.productionTip = false;
 Vue.use(Button);
 Vue.use(Steps);
 Vue.use(message);

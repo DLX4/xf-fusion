@@ -11,6 +11,7 @@
     "ant-design-vue": "^1.5.1",
     "axios": "^0.19.2",
     "core-js": "^3.6.4",
+    "stompjs": "^2.3.3",
     "vue": "^2.6.11"
   },
   "devDependencies": {

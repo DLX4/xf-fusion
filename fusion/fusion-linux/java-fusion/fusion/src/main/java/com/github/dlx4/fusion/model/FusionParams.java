@@ -22,6 +22,13 @@ public class FusionParams {
     /** 融合任务文件 **/
     private String config;
 
+    public FusionParams() {}
+
+    public FusionParams(String imageA, String imageB) {
+        this.imageA = imageA;
+        this.imageB = imageB;
+    }
+
     @Override
     public String toString() {
         return "imageA=" + imageA + "\r\n" +
