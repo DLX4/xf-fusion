@@ -98,7 +98,7 @@ void showLaplacianPyramids(LapPyr &pyr, char *flag)
     {
         stringstream ss;
         ss << flag << "level" << i << ".png";
-        cv::imwrite(ss.str(), ByteScale(cv::abs(pyr[i])));
+        // cv::imwrite(ss.str(), ByteScale(cv::abs(pyr[i])));
         // cv::imwrite(ss.str(), pyr[i]);
         // waitKey(0);
     }
@@ -114,7 +114,7 @@ LaplacianPyramid FasterLLF(const cv::Mat &input,
 
     // int num_levels = LaplacianPyramid::GetLevelCount(input.rows, input.cols, 30);
     int num_levels = 2;
-    cout << "Number of levels: " << num_levels << endl;
+   // cout << "Number of levels: " << num_levels << endl;
 
     const int kRows = input.rows;
     const int kCols = input.cols;
@@ -177,7 +177,7 @@ LaplacianPyramid LocalLaplacianFilter(const cv::Mat &input,
 
     // int num_levels = LaplacianPyramid::GetLevelCount(input.rows, input.cols, 30);
     int num_levels = 2;
-    cout << "Number of levels: " << num_levels << endl;
+  //  cout << "Number of levels: " << num_levels << endl;
 
     const int kRows = input.rows;
     const int kCols = input.cols;
@@ -690,30 +690,22 @@ void msr(Mat &img, Mat &dst, const vector<double> &sigmas)
 }
 
 // 通过源图像构造拉普拉斯金字塔
-void buildLaplacianPyramids(Mat &src, LapPyr &pyr, int octvs = 3)
+LapPyr buildLaplacianPyramids(Mat &input_rgb)
 {
-    // pyr[0~N]构成了拉普拉斯金字塔
-    // 第N层（最后一层）拉普拉斯金字塔同高斯金字塔
-    pyr.clear();
-    pyr.resize(octvs);
-    pyr[0] = src.clone();
+    cv::Mat input;
+    cv::cvtColor(input_rgb, input, CV_RGB2GRAY);
 
-    for (int i = 1; i < octvs; i++)
+    input.convertTo(input, CV_64F, 1 / 255.0);
+
+    LaplacianPyramid tmp_pyr(input, 2);
+    for (int l = 0; l < tmp_pyr.GetLevel(); l++)
     {
-        // 往下构造本层高斯金字塔
-        Mat down;
-        pyrDown(pyr[i - 1], down);
-        pyr[i] = down.clone();
-
-        // upscale 2x
-        Mat expend;
-        pyrUp(down, expend, pyr[i - 1].size());
-
-        // 上一层高斯金字塔减去本层高斯金字塔*2 得到上一层拉普拉斯金字塔
-        Mat subtract;
-        addWeighted(pyr[i - 1], 1, expend, -1, 0, subtract);
-        pyr[i - 1] = subtract.clone();
+        tmp_pyr[l] *= 255;
+        ByteScale(cv::abs(tmp_pyr[l]));
+        tmp_pyr[l].convertTo(tmp_pyr[l], CV_8UC1);
     }
+
+    return tmp_pyr.pyramid_;
 }
 
 // 顶层图像融合策略为平均梯度
@@ -936,53 +928,6 @@ void blendLaplacianPyramidsByRE2(Mat &imageA, Mat &imageB, Mat &imageS)
     }
 }
 
-//// 融合策略为区域能量
-//void blendLaplacianPyramidsByRE1(Mat& imageA, Mat& imageB, Mat& imageS) {
-//    int G[3][3] = {
-//        {1, 2, 1},
-//        {2, 4, 2},
-//        {1, 2, 1}
-//    };
-//    int height = imageA.rows;
-//    int width = imageB.cols;
-
-//    for (int i = 0; i < height; i++) {
-//        for (int j = 0; j < width; j++) {
-
-//            // 不检查边界
-//            if ((i > 1) && (i < (height - 2)) && (j > 1) && (j < (width - 2))) {
-//                // 3*3
-//                int deltaA[3] = {0};
-//                int deltaB[3] = {0};
-//                for (int rowOffset = -1; rowOffset <= 1; rowOffset++) {
-//                    for (int colOffset= -1; colOffset <= 1; colOffset++) {
-//                        for (int rgb = 0; rgb < 3; rgb++) {
-//                            int x = i + rowOffset;
-//                            int y = j + colOffset;
-
-//                            deltaA[rgb] += G[1+rowOffset][1+colOffset] * imageA.at<Vec3b>(x, y)[rgb];
-//                            deltaB[rgb] += G[1+rowOffset][1+colOffset] * imageB.at<Vec3b>(x, y)[rgb];
-//                        }
-//                    }
-//                }
-//                for (int rgb = 0; rgb < 3; rgb++) {
-//                    if (deltaA[rgb] == deltaB[rgb]) {
-//                        imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
-//                    } else if (deltaA[rgb] > deltaB[rgb]) {
-//                        imageS.at<Vec3b>(i, j)[rgb] = imageA.at<Vec3b>(i, j)[rgb];
-//                    } else {
-//                        imageS.at<Vec3b>(i, j)[rgb] = imageB.at<Vec3b>(i, j)[rgb];
-//                    }
-//                }
-//            } else {
-//                // 边界55开填充
-//                for (int rgb = 0; rgb < 3; rgb++) {
-//                    imageS.at<Vec3b>(i, j)[rgb] = 0.5 * imageA.at<Vec3b>(i, j)[rgb] + 0.5 * imageB.at<Vec3b>(i, j)[rgb];
-//                }
-//            }
-//        }
-//    }
-//}
 
 // 顶层融合策略: 选取亮度较大的图片
 void blendLaplacianPyramidsByBrightness(Mat &imageA, Mat &imageB, Mat &imageS)
@@ -1029,9 +974,9 @@ void blendLaplacianPyramidsByHVS(Mat &imageA, Mat &imageB, Mat &imageS)
     salient(imageA, imageA_sal);
     salient(imageB, imageB_sal);
 
-    imshow("imageA_sal", imageA_sal);
-    imshow("imageB_sal", imageB_sal);
-    waitKey();
+//    imshow("imageA_sal", imageA_sal);
+//    imshow("imageB_sal", imageB_sal);
+    // waitKey();
 
     int height = imageA.rows;
     int width = imageA.cols;
@@ -1139,7 +1084,7 @@ void blendLaplacianPyramids(LapPyr &pyrA, LapPyr &pyrB, LapPyr &pyrS, Mat &dst, 
         }
     }
 
-    showLaplacianPyramids(pyrS, flag);
+    // showLaplacianPyramids(pyrS, flag);
 
     // 输出图像
     for (int i = pyrS.size() - 1; i >= 1; i--)
@@ -1159,7 +1104,7 @@ void blendLaplacianPyramids(LapPyr &pyrA, LapPyr &pyrB, LapPyr &pyrS, Mat &dst, 
 LapPyr buildLaplacianPyramidsLLF(Mat &input_rgb)
 {
     const double kSigmaR = 0.4;
-    const double kAlpha = 0.25;
+    const double kAlpha = 0.5;
     const double kBeta = 0;
 
     cv::Mat input;
@@ -1180,7 +1125,7 @@ LapPyr buildLaplacianPyramidsLLF(Mat &input_rgb)
 LapPyr buildLaplacianPyramidsFasterLLF(Mat &input_rgb)
 {
     const double kSigmaR = 0.4;
-    const double kAlpha = 0.25;
+    const double kAlpha = 0.5;
     const double kBeta = 0;
 
     cv::Mat input;
@@ -1212,11 +1157,13 @@ int main2()
     ;
     blendLaplacianPyramidsByHVS(srcA, srcA, dst);
     imshow("dst", dst);
-    waitKey();
+    // waitKey();
 }
 
 int blendLp()
 {
+    clock_t start, end;
+
     LapPyr LA;
     LapPyr LB;
     LapPyr LS;
@@ -1226,18 +1173,28 @@ int blendLp()
     // 图像A 拉普拉斯金字塔
     Mat srcA = imread(IMG1);
 
-    buildLaplacianPyramids(srcA, LA);
-    showLaplacianPyramids(LA, "LP_A_");
+    start = clock();
+    //LaplacianPyramid tmp_pyr(remapped, num_levels);
+    LA = buildLaplacianPyramids(srcA);
+    //showLaplacianPyramids(LA, "LP_A_");
+    end = clock();
+    cout << "lp build A time:" << (double)(end - start) / CLOCKS_PER_SEC << "S" << endl;
 
     // 图像B 拉普拉斯金字塔
     Mat srcB = imread(IMG2);
-    buildLaplacianPyramids(srcB, LB);
-    showLaplacianPyramids(LB, "LP_B_");
+    start = clock();
+    LB = buildLaplacianPyramids(srcB);
+    //showLaplacianPyramids(LB, "LP_B_");
+    end = clock();
+    cout << "lp build B time:" << (double)(end - start) / CLOCKS_PER_SEC << "S" << endl;
 
     Mat dst3;
+    start = clock();
     blendLaplacianPyramids(LA, LB, LS, dst3, 3, "LP_S_");
+    end = clock();
+    cout << "lp blend time:" << (double)(end - start) / CLOCKS_PER_SEC << "S" << endl;
     //restoreBrightness(dst3);
-    imshow("lp", dst3);
+     imshow("lp", dst3);
 
     return 0;
 }
@@ -1254,12 +1211,12 @@ int blendLLF()
     Mat srcA = imread(IMG1);
 
     LA = buildLaplacianPyramidsLLF(srcA);
-    showLaplacianPyramids(LA, "LLF_A_");
+    //showLaplacianPyramids(LA, "LLF_A_");
 
     // 图像B 拉普拉斯金字塔
     Mat srcB = imread(IMG2);
     LB = buildLaplacianPyramidsLLF(srcB);
-    showLaplacianPyramids(LB, "LLF_B_");
+    //showLaplacianPyramids(LB, "LLF_B_");
 
     Mat dst3;
     blendLaplacianPyramids(LA, LB, LS, dst3, 3, "LLF_S_");
@@ -1281,28 +1238,54 @@ int blendFasterLLF()
     Mat srcA = imread(IMG1);
 
     LA = buildLaplacianPyramidsFasterLLF(srcA);
-    showLaplacianPyramids(LA, "LLF_A_");
+    //showLaplacianPyramids(LA, "fastLLF_A_");
 
     // 图像B 拉普拉斯金字塔
     Mat srcB = imread(IMG2);
     LB = buildLaplacianPyramidsFasterLLF(srcB);
-    showLaplacianPyramids(LB, "LLF_B_");
+    //showLaplacianPyramids(LB, "fastLLF_B_");
 
     Mat dst3;
-    blendLaplacianPyramids(LA, LB, LS, dst3, 3, "LLF_S_");
+    blendLaplacianPyramids(LA, LB, LS, dst3, 3, "fastLLF_S_");
     // restoreBrightness(dst3);
-    imshow("faster llf", dst3);
+    imshow("FastLLF", dst3);
 
     return 0;
 }
+int blendFasterLLF_HVS()
+{
+    LapPyr LA;
+    LapPyr LB;
+    LapPyr LS;
 
+    // AVATAR_PATH IMG1_PATH
+
+    // 图像A 拉普拉斯金字塔
+    Mat srcA = imread(IMG1);
+
+    LA = buildLaplacianPyramidsFasterLLF(srcA);
+    //showLaplacianPyramids(LA, "fastLLF_A_");
+
+    // 图像B 拉普拉斯金字塔
+    Mat srcB = imread(IMG2);
+    LB = buildLaplacianPyramidsFasterLLF(srcB);
+    //showLaplacianPyramids(LB, "fastLLF_B_");
+
+    Mat dst3;
+    blendLaplacianPyramids(LA, LB, LS, dst3, 5, "fastLLF_HVS_S_");
+    // restoreBrightness(dst3);
+    imshow("FastLLFfHVS", dst3);
+
+    return 0;
+}
 int main()
 {
     clock_t start, end;
+
     start = clock();
-    blendLp();
+    blendFasterLLF_HVS();//本文提出的新的融合算法  Fast LLF+视觉显著性检测
     end = clock();
-    cout << "lp time:" << (double)(end - start) / CLOCKS_PER_SEC << "S" << endl;
+    cout << "faster LLF + HVS time:" << (double)(end - start) / CLOCKS_PER_SEC << "S" << endl;
 
     start = clock();
     blendLLF();
@@ -1313,6 +1296,12 @@ int main()
     blendFasterLLF();
     end = clock();
     cout << "faster LLF time:" << (double)(end - start) / CLOCKS_PER_SEC << "S" << endl;
+
+    start = clock();
+    blendLp();
+    end = clock();
+    cout << "lp time:" << (double)(end - start) / CLOCKS_PER_SEC << "S" << endl;
+
 
     waitKey(0);
 }
