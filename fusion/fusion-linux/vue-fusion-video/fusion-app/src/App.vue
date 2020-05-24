@@ -49,7 +49,7 @@
                     <a-col :span="8">
                         <div class="content">
 
-                            <a-divider>融合模式</a-divider>
+                            <a-divider style="font-size: 20px;">融合模式</a-divider>
 
                             <div class="params-mode">
                                 <div class="middle">
@@ -68,7 +68,7 @@
                                 </div>
                             </div>
 
-                            <a-divider>融合参数</a-divider>
+                            <a-divider style="font-size: 20px;">融合参数</a-divider>
 
                             <div class="params">
 
@@ -152,42 +152,42 @@
                             </div>
 
 
-                            <a-divider>实时状态</a-divider>
+                            <a-divider style="font-size: 20px;">实时状态</a-divider>
                             <div class="status">
                                 <div class="middle">
 
                                     <div class="params-row">
                                         <div class="params-label ">
-                                            <label>FPS：</label>
+                                            <label>平均帧延时：</label>
                                         </div>
                                         <div class="params-value ">
-                                            <label>{{status.fps}}帧/秒</label>
+                                            <label>{{status.delay}}ms</label>
                                         </div>
                                     </div>
 
                                     <!--<div class="params-row">-->
-                                        <!--<div class="params-label ">-->
-                                            <!--<label>平均时延：</label>-->
-                                        <!--</div>-->
-                                        <!--<div class="params-value ">-->
-                                            <!--<label>{{status.delay}}毫秒</label>-->
-                                        <!--</div>-->
+                                    <!--<div class="params-label ">-->
+                                    <!--<label>平均时延：</label>-->
+                                    <!--</div>-->
+                                    <!--<div class="params-value ">-->
+                                    <!--<label>{{status.delay}}毫秒</label>-->
+                                    <!--</div>-->
                                     <!--</div>-->
                                 </div>
                             </div>
 
-                            <a-divider>控制按钮</a-divider>
+                            <a-divider style="font-size: 20px;">控制按钮</a-divider>
 
                             <div class="control-button">
                                 <div class="middle">
                                     <a-row>
                                         <a-col :span="12">
-                                            <a-button type="primary" :loading="fusionLoading" @click="doFusion">开始采集
+                                            <a-button type="primary" :loading="fusionLoading" @click="doFusion" style="font-size: 20px;">开始采集
                                             </a-button>
                                         </a-col>
 
                                         <a-col :span="12">
-                                            <a-button @click="$message.success('Processing complete!')">停止</a-button>
+                                            <a-button @click="$message.success('Processing complete!')" style="font-size: 20px;">停止</a-button>
                                         </a-col>
                                     </a-row>
                                 </div>
@@ -269,8 +269,8 @@
           mode: 'a'
         },
         status: {
-          fps:1,
-          delay:889
+          fps: 1,
+          delay: 889
         },
         socket: null,
         stompClient: null
@@ -285,9 +285,9 @@
         // that.socket = new SockJS("ws://localhost:8088/zhcx-export-websocket");
         that.stompClient = Stomp.over(that.socket);
 
-        that.stompClient.connect({}, function() {
+        that.stompClient.connect({}, function () {
           console.log("连接成功");
-          that.stompClient.subscribe("/topic/zhcx", function(res) {
+          that.stompClient.subscribe("/topic/zhcx", function (res) {
             let response = JSON.parse(res.body);
             console.log(response);
             that.fusion.imageUrlA = "http://localhost:8088/show?fileName=" + response.imageA;
@@ -355,6 +355,11 @@
 </script>
 
 <style scoped>
+    label {
+        font-size: 20px;
+    }
+
+
     #app {
         font-family: Avenir, Helvetica, Arial, sans-serif;
         -webkit-font-smoothing: antialiased;
@@ -450,7 +455,7 @@
     }
 
     .params-value {
-        width: 250px;
+        width: 350px;
         text-align: left;
     }
 

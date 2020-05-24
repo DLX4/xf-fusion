@@ -18,15 +18,13 @@
 
 **fusion-vivado**：windows环境下的vivado工程
 
-**fusion-hls**：windows环境下vivado hls工程
-
 **fusion-hls\src_xf**：windows环境下vivado hls工程（基于xfopencv），包含项目用到的各种fpga核
-
-**fusion-linux**：linux环境下的工程目录（包含应用的前后端工程，因为他们都要在linux环境发布）
 
 **fusion-linux\java-fusion**：基于springboot的java服务端web项目
 
 **fusion-linux\vue-fusion**：基于vue的前端页面
+
+**fusion-linux\vue-fusion-video**：基于vue的前端页面（模拟了视频效果）
 
 **fusion-linux\zynq-fusion**：在开发板linux系统环境运行的应用
 
